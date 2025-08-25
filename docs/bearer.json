@@ -1,0 +1,12 @@
+{
+  "components": {
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Bearer token (JWT) for authentication. Format: Bearer <token>"
+      }
+    }
+  }
+}

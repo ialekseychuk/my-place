@@ -6,8 +6,8 @@ type Booking struct {
 	ID            string
 	ServiceID     string
 	StaffID       string
-	StartAt       time.Time
-	EndAt        time.Time
+	StartsAt       time.Time
+	EndsAt        time.Time
 	CustomerName  string
 	CustomerEmail string
 	CreatedAt     time.Time

@@ -10,11 +10,22 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/ialekseychuk/my-place/internal/repository"
 	"github.com/ialekseychuk/my-place/internal/server/handlers"
+	"github.com/ialekseychuk/my-place/internal/server/middleware"
 	"github.com/ialekseychuk/my-place/internal/usecase"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
+
+// @title MyPlace API
+// @version 1.0
+// @description This is a sample API with OpenAPI documentation.
+// @host localhost:81
+// @BasePath /api
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 
 func main() {
 	_ = godotenv.Load()
@@ -30,33 +41,52 @@ func main() {
 	businesRepo := repository.NewBusinessRepository(db)
 	serviceRepo := repository.NewServiceRepository(db)
 	staffRepo := repository.NewStaffRepository(db)
-	bookingRepo := repository.NewBookingRepository(db)
+
 
 	// usecases
 	ucBusines := usecase.NewBusinessUseCase(businesRepo)
-	ucBooking := usecase.NewBookingUseCase(bookingRepo, serviceRepo, staffRepo)
+
 	ucService := usecase.NewServiceUseCase(serviceRepo)
+	ucStaff := usecase.NewStaffUseCase(staffRepo)
 
 	//handlers
+
 	bh := handlers.NewBusinessHandler(ucBusines)
-	ah := handlers.NewAvailabilityHandler(ucBooking)
+
 	sh := handlers.NewServiceHandler(ucService)
+	sth := handlers.NewStaffHandler(ucStaff)
 
 	r := chi.NewRouter()
+	r.Use(middleware.Logger(logger))
 
-	r.Route("/api/v1", func(apiRouter chi.Router) {
-		apiRouter.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("api running"))
-		})
-		apiRouter.Route("/businesses", func(businesRouter chi.Router) {
-			businesRouter.Mount("", bh.Routes())
-			businesRouter.Route("/{businessID}", func(businesIDRouter chi.Router) {
-				businesIDRouter.Get("/businesses/{businessID}/availability", ah.Routes().ServeHTTP)
-				businesIDRouter.Mount("/services", sh.Routes())
-			})
-		})
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/docs/swagger.json"), // Point to the local swagger.json file
+	))
 
+	// Serve the swagger.json file from the docs folder
+	r.Get("/docs/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./docs/openapi3.json")
 	})
+
+	r.Route("/api/v1", func(v1 chi.Router) {
+	v1.Use(middleware.JsonResponse)
+
+	v1.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("api running"))
+	})
+
+	v1.Route("/businesses", func(br chi.Router) {
+		// /api/v1/businesses
+		br.Mount("", bh.Routes()) // POST /, GET /
+
+		br.Route("/{businessID}", func(bir chi.Router) {
+			
+			bir.Mount("/services",    sh.Routes())  // POST /, GET /
+			bir.Mount("/staff",       sth.Routes()) // POST /, GET /
+		
+		})
+	})
+})
 
 	port := os.Getenv("APP_HTTP_PORT")
 

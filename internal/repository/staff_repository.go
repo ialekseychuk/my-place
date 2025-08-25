@@ -51,3 +51,17 @@ func (r *staffRepository) ListByBusinessId(ctx context.Context, businessId strin
 
 	return staff, rows.Err()
 }
+
+func (r *staffRepository) GetById(ctx context.Context, id string) (*domain.Staff, error) {
+	var s domain.Staff
+	err := r.db.QueryRow(ctx,
+	`SELECT id, business_id, full_name, created_at, updated_at
+	 FROM staff
+	 WHERE id = $1`,
+	id).Scan(&s.ID, &s.BusinessID, &s.FullName, &s.CreatedAt, &s.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	
+	return &s, nil
+}

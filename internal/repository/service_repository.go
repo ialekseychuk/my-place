@@ -50,3 +50,17 @@ func (r *serviceRepository) ListByBusinessId(ctx context.Context, businessId str
 
 	return services, rows.Err()
 }
+
+func (r *serviceRepository) GetById(ctx context.Context, id string) (*domain.Service, error) {
+	var s domain.Service
+	err := r.db.QueryRow(ctx,
+	`SELECT id, business_id, name, duration_min, price_cents, created_at, updated_at
+	 FROM services
+	 WHERE id = $1`,
+	id).Scan(&s.ID, &s.BusinessID, &s.Name, &s.DurationMin, &s.PriceCents, &s.CreatedAt, &s.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	
+	return &s, nil
+}

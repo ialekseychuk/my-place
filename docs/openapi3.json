@@ -1,0 +1,749 @@
+{
+  "components": {
+    "schemas": {
+      "github_com_ialekseychuk_my-place_internal_dto.CreateBookingRequest": {
+        "properties": {
+          "customer_email": {
+            "type": "string"
+          },
+          "customer_name": {
+            "maxLength": 100,
+            "minLength": 3,
+            "type": "string"
+          },
+          "service_id": {
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "start_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_email",
+          "customer_name",
+          "service_id",
+          "staff_id",
+          "start_at"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.CreateBusinessRequest": {
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 3,
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "timezone"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.CreateServiceRequest": {
+        "properties": {
+          "duration_min": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 3,
+            "type": "string"
+          },
+          "price_cents": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "duration_min",
+          "name",
+          "price_cents"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.CreateStaffRequest": {
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.ErrorResponse": {
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "bearerFormat": "JWT",
+        "description": "Bearer token (JWT) for authentication. Format: Bearer \u003ctoken\u003e",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {},
+    "description": "This is a sample API with OpenAPI documentation.",
+    "title": "MyPlace API",
+    "version": "1.0"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/businesses": {
+      "post": {
+        "description": "Creates a new company",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateBusinessRequest"
+              }
+            }
+          },
+          "description": "Business object",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create a new Business",
+        "tags": [
+          "Business"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/bookings": {
+      "post": {
+        "description": "Creates a new booking",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateBookingRequest"
+              }
+            }
+          },
+          "description": "Booking object",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create a new booking",
+        "tags": [
+          "Booking"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/bookings/slots": {
+      "get": {
+        "description": "get free slots",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "query",
+            "name": "staff_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Day",
+            "in": "query",
+            "name": "day",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "get free slots",
+        "tags": [
+          "Booking"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/services": {
+      "get": {
+        "description": "get services",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "get services",
+        "tags": [
+          "Service"
+        ]
+      },
+      "post": {
+        "description": "Creates a new service for business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateServiceRequest"
+              }
+            }
+          },
+          "description": "Service object",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create a new service",
+        "tags": [
+          "Service"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/staffs": {
+      "get": {
+        "description": "get staffs",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "get staffs",
+        "tags": [
+          "Staff"
+        ]
+      },
+      "post": {
+        "description": "Creates a new staff for business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateStaffRequest"
+              }
+            }
+          },
+          "description": "Staff object",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create a new staff",
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/api/v1/businesses/{id}": {
+      "get": {
+        "description": "Get company by id",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get company by id",
+        "tags": [
+          "Business"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ]
+}
