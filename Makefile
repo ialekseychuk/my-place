@@ -49,6 +49,11 @@ migrate-down: ## Run migrations rollback
 migrate-status: ## Run migrations status
 	goose -dir ./migrations postgres "${POSTGRES_DSN}" status
 
+migrate-create: ## Create new migration
+	@echo "Usage: make migrate-create name=<migration_name>"
+	@[ "$(name)" ] || (echo "❗  нужно указать name=<migration_name>"; exit 1)
+	goose -dir ./migrations create $(name) sql	
+
 swagger: ## Сгенерировать OpenAPI-документацию
 	@echo "$(COLOR_GREEN)Checking for swag installation...$(COLOR_RESET)"
 	@command -v swag >/dev/null 2>&1 || { echo "$(COLOR_YELLOW)Error: swag not found. Run 'make swagger-init'$(COLOR_RESET)"; exit 1; }
