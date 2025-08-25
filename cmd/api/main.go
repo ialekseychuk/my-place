@@ -39,12 +39,15 @@ func main() {
 	defer db.Close()
 	// repos
 	businesRepo := repository.NewBusinessRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	workingHoursRepo := repository.NewBusinessWorkingHoursRepository(db)
 	serviceRepo := repository.NewServiceRepository(db)
 	staffRepo := repository.NewStaffRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
 
 	// usecases
-	ucBusines := usecase.NewBusinessUseCase(businesRepo)
+	ucBusines := usecase.NewBusinessUseCase(businesRepo, userRepo, workingHoursRepo)
+	authService := usecase.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
 
 	ucService := usecase.NewServiceUseCase(serviceRepo)
 	ucStaff := usecase.NewStaffUseCase(staffRepo)
@@ -53,6 +56,7 @@ func main() {
 	//handlers
 
 	bh := handlers.NewBusinessHandler(ucBusines)
+	authHandler := handlers.NewAuthHandler(authService)
 
 	sh := handlers.NewServiceHandler(ucService)
 	sth := handlers.NewStaffHandler(ucStaff)
@@ -60,6 +64,9 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger(logger))
+
+	// JWT middleware
+	jwtMiddleware := middleware.JWTMiddleware(authService)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/docs/swagger.json"),
@@ -72,21 +79,35 @@ func main() {
 	r.Route("/api/v1", func(v1 chi.Router) {
 		v1.Use(middleware.JsonResponse)
 
+		// Public routes
 		v1.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("api running"))
 		})
+		v1.Post("/businesses/register", bh.RegisterBusiness)
+		v1.Mount("/auth", authHandler.Routes())
 
-		v1.Route("/businesses", func(br chi.Router) {
-			br.Post("/", bh.CreateBusiness)
+		// Protected routes
+		v1.Group(func(protected chi.Router) {
+			protected.Use(jwtMiddleware)
 
-			br.Route("/{businessID}", func(bir chi.Router) {
-				// Business-specific routes (without additional path)
-				bir.Get("/", bh.GetBusiness)
+			protected.Route("/businesses", func(br chi.Router) {
+				br.Post("/", bh.CreateBusiness)
 
-				// Resource routes
-				bir.Mount("/services", sh.Routes())
-				bir.Mount("/staffs", sth.Routes())
-				bir.Mount("/bookings", bkh.Routes())
+				br.Route("/{businessID}", func(bir chi.Router) {
+					// Business owner only routes
+					bir.Group(func(owner chi.Router) {
+						owner.Use(middleware.RequireRole("owner"))
+						owner.Get("/", bh.GetBusiness)
+						owner.Mount("/services", sh.Routes())
+						owner.Mount("/staffs", sth.Routes())
+					})
+
+					// Staff accessible routes
+					bir.Group(func(staff chi.Router) {
+						staff.Use(middleware.RequireAnyRole("owner", "staff"))
+						staff.Mount("/bookings", bkh.Routes())
+					})
+				})
 			})
 		})
 	})

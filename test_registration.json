@@ -1,0 +1,31 @@
+{
+  "businessName": "Test Beauty Salon",
+  "businessType": "beauty_salon", 
+  "description": "A test beauty salon",
+  "address": "123 Test Street",
+  "city": "Test City",
+  "phone": "+1234567890",
+  "email": "test@testsalon.com",
+  "website": "https://testsalon.com",
+  "ownerFirstName": "John",
+  "ownerLastName": "Doe", 
+  "ownerPhone": "+1234567890",
+  "ownerEmail": "john@testsalon.com",
+  "ownerPassword": "testpassword123",
+  "ownerPasswordConfirm": "testpassword123",
+  "workingHours": {
+    "monday": {"start": "09:00", "end": "18:00", "enabled": true},
+    "tuesday": {"start": "09:00", "end": "18:00", "enabled": true},
+    "wednesday": {"start": "09:00", "end": "18:00", "enabled": true}, 
+    "thursday": {"start": "09:00", "end": "18:00", "enabled": true},
+    "friday": {"start": "09:00", "end": "18:00", "enabled": true},
+    "saturday": {"start": "10:00", "end": "16:00", "enabled": true},
+    "sunday": {"start": "10:00", "end": "16:00", "enabled": false}
+  },
+  "timezone": "Europe/Moscow",
+  "currency": "RUB", 
+  "enableOnlineBooking": true,
+  "enableSMSNotifications": true,
+  "enableEmailNotifications": true,
+  "acceptTerms": true
+}

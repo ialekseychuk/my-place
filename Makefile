@@ -18,6 +18,9 @@ help: ## Показать доступные команды
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | sed 's/.*Makefile://' | awk 'BEGIN {FS = ":.*?## "}; {printf "$(COLOR_YELLOW)%-20s$(COLOR_RESET) %s\n", $$1, $$2}'
 
 
+front: ## Run frontend
+	cd frontend && npm run dev
+
 dev: tidy ## Run development environment
 	go run ./cmd/api
 

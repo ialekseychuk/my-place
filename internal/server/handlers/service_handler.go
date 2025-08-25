@@ -27,10 +27,10 @@ func (h *ServiceHandler) Routes() chi.Router {
 	r.Get("/", h.getServicesByBusiness)
 
 	// Временный отладочный маршрут
-    r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
-        businessID := chi.URLParam(r, "businessID")
-        w.Write([]byte("Test POST in ServiceHandler for businessID: " + businessID))
-    })
+	r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
+		businessID := chi.URLParam(r, "businessID")
+		w.Write([]byte("Test POST in ServiceHandler for businessID: " + businessID))
+	})
 	return r
 }
 
@@ -41,7 +41,8 @@ func (h *ServiceHandler) Routes() chi.Router {
 // @Produce json
 // @Param service body dto.CreateServiceRequest true "Service object"
 // @Param businessID path string true "Business ID"
-// @Success 201
+// @Success 201 {object} dto.ServiceResponse
+// @Failure 400 {object} dto.ErrorResponse "Bad request"
 // @Failure 422 {object} map[string]string "Validation errors"
 // @Failure 401 {object} dto.ErrorResponse "Unauthorized"
 // @Failure 403 {object} dto.ErrorResponse "Forbidden"
@@ -50,7 +51,7 @@ func (h *ServiceHandler) Routes() chi.Router {
 // @Router /api/v1/businesses/{businessID}/services [post]
 func (h *ServiceHandler) createService(w http.ResponseWriter, r *http.Request) {
 	businessID := chi.URLParam(r, "businessID")
-	
+
 	var req dto.CreateServiceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		ErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -71,33 +72,53 @@ func (h *ServiceHandler) createService(w http.ResponseWriter, r *http.Request) {
 	if err := h.uc.CreateService(r.Context(), svc); err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "internal server error")
 		return
-
 	}
+
+	// Convert to DTO response
+	response := h.convertToServiceResponse(svc)
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(svc)
+	json.NewEncoder(w).Encode(response)
 }
 
-// @Summary get services
-// @Description get services
+// @Summary Get services by business
+// @Description Get all services for a business
 // @Tags Service
 // @Accept json
 // @Produce json
 // @Param businessID path string true "Business ID"
-// @Success 200
-// @Failure 404
-// @Failure 422 {object} map[string]string "Validation errors"
+// @Success 200 {array} dto.ServiceResponse
+// @Failure 404 {object} dto.ErrorResponse "Not found"
 // @Failure 401 {object} dto.ErrorResponse "Unauthorized"
 // @Failure 403 {object} dto.ErrorResponse "Forbidden"
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security Bearer
 // @Router /api/v1/businesses/{businessID}/services [get]
 func (h *ServiceHandler) getServicesByBusiness(w http.ResponseWriter, r *http.Request) {
-	businesID := chi.URLParam(r, "businessID")
-	b, err := h.uc.ListByBusinessId(r.Context(), businesID)
+	businessID := chi.URLParam(r, "businessID")
+	services, err := h.uc.ListByBusinessId(r.Context(), businessID)
 	if err != nil {
 		ErrorResponse(w, http.StatusNotFound, "Not found")
 		return
 	}
-	
-	json.NewEncoder(w).Encode(b)
+
+	// Convert to DTO responses
+	var responses []dto.ServiceResponse
+	for _, service := range services {
+		responses = append(responses, h.convertToServiceResponse(&service))
+	}
+
+	json.NewEncoder(w).Encode(responses)
+}
+
+// Helper method to convert domain.Service to dto.ServiceResponse
+func (h *ServiceHandler) convertToServiceResponse(service *domain.Service) dto.ServiceResponse {
+	return dto.ServiceResponse{
+		ID:          service.ID,
+		BusinessID:  service.BusinessID,
+		Name:        service.Name,
+		DurationMin: service.DurationMin,
+		PriceCents:  service.PriceCents,
+		CreatedAt:   service.CreatedAt,
+		UpdatedAt:   service.UpdatedAt,
+	}
 }

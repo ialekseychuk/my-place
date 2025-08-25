@@ -1,6 +1,59 @@
 {
   "components": {
     "schemas": {
+      "github_com_ialekseychuk_my-place_internal_domain.AuthToken": {
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_domain.User": {
+        "properties": {
+          "business_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "description": "owner, admin, staff",
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.CreateBookingRequest": {
         "properties": {
           "customer_email": {
@@ -32,19 +85,118 @@
       },
       "github_com_ialekseychuk_my-place_internal_dto.CreateBusinessRequest": {
         "properties": {
-          "name": {
+          "acceptTerms": {
+            "type": "boolean"
+          },
+          "address": {
+            "description": "Contact Information",
+            "type": "string"
+          },
+          "businessName": {
+            "description": "Business Information",
             "maxLength": 100,
             "minLength": 3,
             "type": "string"
           },
+          "businessType": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "enableEmailNotifications": {
+            "type": "boolean"
+          },
+          "enableOnlineBooking": {
+            "description": "Additional Settings",
+            "type": "boolean"
+          },
+          "enableSMSNotifications": {
+            "type": "boolean"
+          },
+          "ownerEmail": {
+            "type": "string"
+          },
+          "ownerFirstName": {
+            "description": "Owner Information",
+            "maxLength": 50,
+            "minLength": 2,
+            "type": "string"
+          },
+          "ownerLastName": {
+            "maxLength": 50,
+            "minLength": 2,
+            "type": "string"
+          },
+          "ownerPassword": {
+            "minLength": 8,
+            "type": "string"
+          },
+          "ownerPasswordConfirm": {
+            "type": "string"
+          },
+          "ownerPhone": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
           "timezone": {
             "type": "string"
+          },
+          "website": {
+            "type": "string"
+          },
+          "workingHours": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WorkingHoursWeekDTO"
+              }
+            ],
+            "description": "Business Settings"
           }
         },
         "required": [
-          "name",
-          "timezone"
+          "acceptTerms",
+          "address",
+          "businessName",
+          "businessType",
+          "city",
+          "currency",
+          "email",
+          "ownerEmail",
+          "ownerFirstName",
+          "ownerLastName",
+          "ownerPassword",
+          "ownerPasswordConfirm",
+          "ownerPhone",
+          "phone",
+          "timezone",
+          "workingHours"
         ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.CreateBusinessResponse": {
+        "properties": {
+          "business_id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "github_com_ialekseychuk_my-place_internal_dto.CreateServiceRequest": {
@@ -72,20 +224,126 @@
       },
       "github_com_ialekseychuk_my-place_internal_dto.CreateStaffRequest": {
         "properties": {
-          "name": {
+          "description": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "first_name": {
+            "maxLength": 50,
+            "minLength": 2,
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "male",
+              "female",
+              "other",
+              "prefer_not_to_say"
+            ],
+            "type": "string"
+          },
+          "last_name": {
+            "maxLength": 50,
+            "minLength": 2,
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 20,
+            "minLength": 10,
+            "type": "string"
+          },
+          "position": {
             "maxLength": 100,
-            "minLength": 3,
+            "minLength": 2,
+            "type": "string"
+          },
+          "specialization": {
+            "maxLength": 100,
             "type": "string"
           }
         },
         "required": [
-          "name"
+          "first_name",
+          "last_name",
+          "position"
         ],
         "type": "object"
       },
       "github_com_ialekseychuk_my-place_internal_dto.ErrorResponse": {
         "properties": {
           "error": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "minLength": 8,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.LoginResponse": {
+        "properties": {
+          "token": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_domain.AuthToken"
+          },
+          "user": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_domain.User"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.RefreshTokenResponse": {
+        "properties": {
+          "token": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_domain.AuthToken"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.ServiceResponse": {
+        "properties": {
+          "business_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "duration_min": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price_cents": {
+            "type": "integer"
+          },
+          "updated_at": {
             "type": "string"
           }
         },
@@ -101,6 +359,175 @@
           },
           "start": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.StaffResponse": {
+        "properties": {
+          "business_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "full_name": {
+            "description": "computed field: FirstName + LastName",
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "specialization": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.UpdateStaffRequest": {
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "first_name": {
+            "maxLength": 50,
+            "minLength": 2,
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "male",
+              "female",
+              "other",
+              "prefer_not_to_say"
+            ],
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "last_name": {
+            "maxLength": 50,
+            "minLength": 2,
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 20,
+            "minLength": 10,
+            "type": "string"
+          },
+          "position": {
+            "maxLength": 100,
+            "minLength": 2,
+            "type": "string"
+          },
+          "specialization": {
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.UserProfileResponse": {
+        "properties": {
+          "business_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.WorkingHoursDTO": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "end": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "end",
+          "start"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.WorkingHoursWeekDTO": {
+        "properties": {
+          "friday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WorkingHoursDTO"
+          },
+          "monday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WorkingHoursDTO"
+          },
+          "saturday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WorkingHoursDTO"
+          },
+          "sunday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WorkingHoursDTO"
+          },
+          "thursday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WorkingHoursDTO"
+          },
+          "tuesday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WorkingHoursDTO"
+          },
+          "wednesday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WorkingHoursDTO"
           }
         },
         "type": "object"
@@ -123,6 +550,241 @@
   },
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "Authenticate user with email and password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LoginRequest"
+              }
+            }
+          },
+          "description": "Login credentials",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LoginResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid credentials"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "User login",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "Logout user (invalidate tokens)",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "User logout",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/profile": {
+      "get": {
+        "description": "Get current authenticated user's profile",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UserProfileResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get current user profile",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "description": "Get new access token using refresh token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.RefreshTokenRequest"
+              }
+            }
+          },
+          "description": "Refresh token",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.RefreshTokenResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid refresh token"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Refresh access token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/businesses": {
       "post": {
         "description": "Creates a new company",
@@ -191,6 +853,61 @@
           }
         ],
         "summary": "Create a new Business",
+        "tags": [
+          "Business"
+        ]
+      }
+    },
+    "/api/v1/businesses/register": {
+      "post": {
+        "description": "Creates a new business with complete registration including owner and working hours",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateBusinessRequest"
+              }
+            }
+          },
+          "description": "Business registration object",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateBusinessResponse"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Register a new Business with owner and settings",
         "tags": [
           "Business"
         ]
@@ -485,7 +1202,7 @@
     },
     "/api/v1/businesses/{businessID}/services": {
       "get": {
-        "description": "get services",
+        "description": "Get all services for a business",
         "parameters": [
           {
             "description": "Business ID",
@@ -499,6 +1216,16 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
             "description": "OK"
           },
           "401": {
@@ -522,20 +1249,14 @@
             "description": "Forbidden"
           },
           "404": {
-            "description": "Not Found"
-          },
-          "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
                 }
               }
             },
-            "description": "Validation errors"
+            "description": "Not found"
           },
           "500": {
             "content": {
@@ -553,7 +1274,7 @@
             "Bearer": []
           }
         ],
-        "summary": "get services",
+        "summary": "Get services by business",
         "tags": [
           "Service"
         ]
@@ -584,7 +1305,24 @@
         },
         "responses": {
           "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+                }
+              }
+            },
             "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
           },
           "401": {
             "content": {
@@ -794,6 +1532,170 @@
           }
         ],
         "summary": "Create a new staff",
+        "tags": [
+          "Staff"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/staffs/{staffID}": {
+      "get": {
+        "description": "Get staff member by ID",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff by ID",
+        "tags": [
+          "Staff"
+        ]
+      },
+      "put": {
+        "description": "Update staff member information",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateStaffRequest"
+              }
+            }
+          },
+          "description": "Staff update data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update staff",
         "tags": [
           "Staff"
         ]
