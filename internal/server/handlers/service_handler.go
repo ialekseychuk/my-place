@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -51,7 +50,7 @@ func (h *ServiceHandler) Routes() chi.Router {
 // @Router /api/v1/businesses/{businessID}/services [post]
 func (h *ServiceHandler) createService(w http.ResponseWriter, r *http.Request) {
 	businessID := chi.URLParam(r, "businessID")
-	fmt.Println("==============", businessID)
+	
 	var req dto.CreateServiceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		ErrorResponse(w, http.StatusBadRequest, err.Error())

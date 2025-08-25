@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/ialekseychuk/my-place/internal/repository"
 	"github.com/ialekseychuk/my-place/internal/server/handlers"
 	"github.com/ialekseychuk/my-place/internal/server/middleware"
@@ -41,13 +41,14 @@ func main() {
 	businesRepo := repository.NewBusinessRepository(db)
 	serviceRepo := repository.NewServiceRepository(db)
 	staffRepo := repository.NewStaffRepository(db)
-
+	bookingRepo := repository.NewBookingRepository(db)
 
 	// usecases
 	ucBusines := usecase.NewBusinessUseCase(businesRepo)
 
 	ucService := usecase.NewServiceUseCase(serviceRepo)
 	ucStaff := usecase.NewStaffUseCase(staffRepo)
+	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo)
 
 	//handlers
 
@@ -55,38 +56,40 @@ func main() {
 
 	sh := handlers.NewServiceHandler(ucService)
 	sth := handlers.NewStaffHandler(ucStaff)
+	bkh := handlers.NewBookingHandler(ucBooking)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger(logger))
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/docs/swagger.json"), // Point to the local swagger.json file
+		httpSwagger.URL("/docs/swagger.json"),
 	))
 
-	// Serve the swagger.json file from the docs folder
 	r.Get("/docs/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./docs/openapi3.json")
 	})
 
 	r.Route("/api/v1", func(v1 chi.Router) {
-	v1.Use(middleware.JsonResponse)
+		v1.Use(middleware.JsonResponse)
 
-	v1.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("api running"))
-	})
+		v1.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("api running"))
+		})
 
-	v1.Route("/businesses", func(br chi.Router) {
-		// /api/v1/businesses
-		br.Mount("", bh.Routes()) // POST /, GET /
+		v1.Route("/businesses", func(br chi.Router) {
+			br.Post("/", bh.CreateBusiness)
 
-		br.Route("/{businessID}", func(bir chi.Router) {
-			
-			bir.Mount("/services",    sh.Routes())  // POST /, GET /
-			bir.Mount("/staff",       sth.Routes()) // POST /, GET /
-		
+			br.Route("/{businessID}", func(bir chi.Router) {
+				// Business-specific routes (without additional path)
+				bir.Get("/", bh.GetBusiness)
+
+				// Resource routes
+				bir.Mount("/services", sh.Routes())
+				bir.Mount("/staffs", sth.Routes())
+				bir.Mount("/bookings", bkh.Routes())
+			})
 		})
 	})
-})
 
 	port := os.Getenv("APP_HTTP_PORT")
 

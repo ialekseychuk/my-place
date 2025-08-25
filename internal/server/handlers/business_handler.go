@@ -69,7 +69,7 @@ func (h *BusinessHandler) CreateBusiness(w http.ResponseWriter, r *http.Request)
 // @Tags Business
 // @Accept json
 // @Produce json
-// @Param id path string true "Business ID"
+// @Param businessID path string true "Business ID"
 // @Success 200
 // @Failure 404
 // @Failure 422 {object} map[string]string "Validation errors"
@@ -77,7 +77,7 @@ func (h *BusinessHandler) CreateBusiness(w http.ResponseWriter, r *http.Request)
 // @Failure 403 {object} dto.ErrorResponse "Forbidden"
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security Bearer
-// @Router /api/v1/businesses/{id} [get]
+// @Router /api/v1/businesses/{businessID} [get]
 func (h *BusinessHandler) GetBusiness(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "businessID")
 	b, err := h.uc.GetById(r.Context(), id)

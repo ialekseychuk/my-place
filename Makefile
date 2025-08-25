@@ -21,6 +21,9 @@ help: ## Показать доступные команды
 dev: tidy ## Run development environment
 	go run ./cmd/api
 
+stop-dev: ## Stop development environment
+	lsof -ti:81 | xargs kill -9
+
 up: ## Run docker
 	docker compose up -d
 
