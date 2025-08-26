@@ -54,6 +54,31 @@
         },
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.AssignMultipleServicesToStaffRequest": {
+        "properties": {
+          "service_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "service_ids"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.AssignServiceToStaffRequest": {
+        "properties": {
+          "service_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "service_id"
+        ],
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.CreateBookingRequest": {
         "properties": {
           "customer_email": {
@@ -400,6 +425,32 @@
             "type": "string"
           },
           "specialization": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.StaffServiceResponse": {
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "service_id": {
+            "type": "string"
+          },
+          "service_name": {
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "staff_name": {
             "type": "string"
           },
           "updated_at": {
@@ -1698,6 +1749,382 @@
         "summary": "Update staff",
         "tags": [
           "Staff"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/staffs/{staffID}/services": {
+      "get": {
+        "description": "Gets all services assigned to a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff services",
+        "tags": [
+          "StaffServices"
+        ]
+      },
+      "post": {
+        "description": "Assigns a service to a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AssignServiceToStaffRequest"
+              }
+            }
+          },
+          "description": "Service assignment request",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffServiceResponse"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff or service not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Assign service to staff",
+        "tags": [
+          "StaffServices"
+        ]
+      },
+      "put": {
+        "description": "Replaces all services assigned to a staff member with new ones",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AssignMultipleServicesToStaffRequest"
+              }
+            }
+          },
+          "description": "Services assignment request",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Replace staff services",
+        "tags": [
+          "StaffServices"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/staffs/{staffID}/services/{serviceID}": {
+      "delete": {
+        "description": "Removes a service assignment from a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Service ID",
+            "in": "path",
+            "name": "serviceID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Assignment not found"
+          },
+          "500": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Unassign service from staff",
+        "tags": [
+          "StaffServices"
         ]
       }
     }

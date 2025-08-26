@@ -1,22 +1,24 @@
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/contexts/AuthContext'
+import { cn } from '@/lib/utils'
+import {
+  Calendar,
+  Home,
+  Link2,
+  LogOut,
+  Menu,
+  Package,
+  Settings,
+  Users,
+  X
+} from 'lucide-react'
 import React from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/button'
-import { 
-  Home, 
-  Users, 
-  Settings, 
-  Calendar, 
-  Package,
-  Menu,
-  X,
-  LogOut
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Панель управления', href: '/', icon: Home },
   { name: 'Персонал', href: '/staff', icon: Users },
+  { name: 'Услуги персонала', href: '/staff-services', icon: Link2 },
   { name: 'Услуги', href: '/services', icon: Package },
   { name: 'Расписание', href: '/schedule', icon: Calendar },
   { name: 'Бронирования', href: '/bookings', icon: Calendar },

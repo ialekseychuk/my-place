@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Plus, Users } from 'lucide-react'
 import { AddStaffForm } from '@/components/AddStaffForm'
 import { StaffList } from '@/components/StaffList'
-import { staffService } from '@/services/staff'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Staff, CreateStaffRequest } from '@/types/staff'
+import { staffService } from '@/services/staff'
+import type { CreateStaffRequest, Staff } from '@/types/staff'
+import { Plus, Settings, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export function StaffPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [staff, setStaff] = useState<Staff[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -73,10 +75,20 @@ export function StaffPage() {
             Управление сотрудниками и их расписанием
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
-          <Plus className="mr-2 h-4 w-4" />
-          Добавить сотрудника
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => navigate('/staff-services')}
+            disabled={staff.length === 0}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Привязка услуг
+          </Button>
+          <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
+            <Plus className="mr-2 h-4 w-4" />
+            Добавить сотрудника
+          </Button>
+        </div>
       </div>
 
       {error && (

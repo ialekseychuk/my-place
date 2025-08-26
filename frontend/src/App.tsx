@@ -1,16 +1,17 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { Layout } from '@/components/Layout'
-import { Dashboard } from '@/pages/Dashboard'
-import { StaffPage } from '@/pages/StaffPage'
-import { ServicesPage } from '@/pages/ServicesPage'
-import { SchedulePage } from '@/pages/SchedulePage'
-import { BookingsPage } from '@/pages/BookingsPage'
-import { SettingsPage } from '@/pages/SettingsPage'
 import { BusinessRegistration } from '@/components/BusinessRegistration'
+import { Layout } from '@/components/Layout'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { BookingsPage } from '@/pages/BookingsPage'
+import { Dashboard } from '@/pages/Dashboard'
 import { LoginPage } from '@/pages/LoginPage'
+import { SchedulePage } from '@/pages/SchedulePage'
+import { ServicesPage } from '@/pages/ServicesPage'
+import { SettingsPage } from '@/pages/SettingsPage'
+import { StaffServicePage } from '@/pages/StaffServicePage'
+import { StaffPage } from '@/pages/StaffPage'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ function App() {
             }>
               <Route index element={<Dashboard />} />
               <Route path="staff" element={<StaffPage />} />
+              <Route path="staff-services" element={<StaffServicePage />} />
               <Route path="services" element={<ServicesPage />} />
               <Route path="schedule" element={<SchedulePage />} />
               <Route path="bookings" element={<BookingsPage />} />

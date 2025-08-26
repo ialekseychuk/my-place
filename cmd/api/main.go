@@ -44,13 +44,14 @@ func main() {
 	serviceRepo := repository.NewServiceRepository(db)
 	staffRepo := repository.NewStaffRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
+	staffServiceRepo := repository.NewStaffServiceRepository(db)
 
 	// usecases
 	ucBusines := usecase.NewBusinessUseCase(businesRepo, userRepo, workingHoursRepo)
 	authService := usecase.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
 
 	ucService := usecase.NewServiceUseCase(serviceRepo)
-	ucStaff := usecase.NewStaffUseCase(staffRepo)
+	ucStaff := usecase.NewStaffUseCase(staffRepo, staffServiceRepo, serviceRepo)
 	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo)
 
 	//handlers
@@ -60,6 +61,7 @@ func main() {
 
 	sh := handlers.NewServiceHandler(ucService)
 	sth := handlers.NewStaffHandler(ucStaff)
+	stsh := handlers.NewStaffServiceHandler(ucStaff)
 	bkh := handlers.NewBookingHandler(ucBooking)
 
 	r := chi.NewRouter()
@@ -100,6 +102,7 @@ func main() {
 						owner.Get("/", bh.GetBusiness)
 						owner.Mount("/services", sh.Routes())
 						owner.Mount("/staffs", sth.Routes())
+						owner.Mount("/staff-services", stsh.Routes())
 					})
 
 					// Staff accessible routes
