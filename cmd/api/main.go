@@ -45,6 +45,7 @@ func main() {
 	staffRepo := repository.NewStaffRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
 	staffServiceRepo := repository.NewStaffServiceRepository(db)
+	scheduleRepo := repository.NewScheduleRepository(db)
 
 	// usecases
 	ucBusines := usecase.NewBusinessUseCase(businesRepo, userRepo, workingHoursRepo)
@@ -53,6 +54,7 @@ func main() {
 	ucService := usecase.NewServiceUseCase(serviceRepo)
 	ucStaff := usecase.NewStaffUseCase(staffRepo, staffServiceRepo, serviceRepo)
 	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo)
+	scheduleService := usecase.NewScheduleService(scheduleRepo, staffRepo)
 
 	//handlers
 
@@ -63,6 +65,7 @@ func main() {
 	sth := handlers.NewStaffHandler(ucStaff)
 	stsh := handlers.NewStaffServiceHandler(ucStaff)
 	bkh := handlers.NewBookingHandler(ucBooking)
+	scheduleHandler := handlers.NewScheduleHandler(scheduleService)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger(logger))
@@ -103,6 +106,7 @@ func main() {
 						owner.Mount("/services", sh.Routes())
 						owner.Mount("/staffs", sth.Routes())
 						owner.Mount("/staff-services", stsh.Routes())
+						owner.Mount("/schedule", scheduleHandler.Routes())
 					})
 
 					// Staff accessible routes

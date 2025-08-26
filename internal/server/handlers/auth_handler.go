@@ -58,9 +58,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // @Summary Refresh access token
@@ -93,9 +95,11 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // @Summary User logout
@@ -117,11 +121,14 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// For now, we'll just return a success response
 	// The client should remove tokens from storage
 
-	w.Header().Set("Content-Type", "application/json")
+	
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	if err := json.NewEncoder(w).Encode(map[string]string{
 		"message": "Successfully logged out",
-	})
+	}); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "Failed to encode response")
+		return
+	}
 }
 
 // @Summary Get current user profile
@@ -139,7 +146,10 @@ func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	// For now, return a placeholder response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	if err := json.NewEncoder(w).Encode(map[string]string{
 		"message": "Profile endpoint - implement user extraction from context",
-	})
+	}); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "Failed to encode response")
+		return
+	}
 }

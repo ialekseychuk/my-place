@@ -61,13 +61,16 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	if errs := validate.Struct(req); errs != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(map[string]any{"errors": errs})
+		if err := json.NewEncoder(w).Encode(map[string]any{"errors": errs}); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
 	err := h.bookingService.CreateBooking(r.Context(), businessID, &req)
 	if err != nil {
-	
+
 		switch {
 		case err.Error() == "service not found" || err.Error() == "staff not found":
 			ErrorResponse(w, http.StatusNotFound, err.Error())
@@ -130,5 +133,8 @@ func (h *BookingHandler) GetAvailability(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	json.NewEncoder(w).Encode(slots)
+	if err := json.NewEncoder(w).Encode(slots); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }

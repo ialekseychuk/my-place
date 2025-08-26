@@ -1,5 +1,18 @@
 {
   "components": {
+    "requestBodies": {
+      "github_com_ialekseychuk_my-place_internal_dto.QuickStaffActionRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.QuickStaffActionRequest"
+            }
+          }
+        },
+        "description": "Quick action data",
+        "required": true
+      }
+    },
     "schemas": {
       "github_com_ialekseychuk_my-place_internal_domain.AuthToken": {
         "properties": {
@@ -76,6 +89,176 @@
         },
         "required": [
           "service_id"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.AvailabilityLogResponse": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "action_by": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "new_status": {
+            "type": "boolean"
+          },
+          "previous_status": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "shift_id": {
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.BulkCreateShiftsRequest": {
+        "properties": {
+          "shifts": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateShiftRequest"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "shifts"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.BulkDeleteShiftsRequest": {
+        "properties": {
+          "action_by": {
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "shift_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "action_by",
+          "reason",
+          "shift_ids"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.BulkUpdateShiftsRequest": {
+        "properties": {
+          "updates": {
+            "items": {
+              "properties": {
+                "shift_id": {
+                  "type": "string"
+                },
+                "update": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateShiftRequest"
+                }
+              },
+              "required": [
+                "shift_id",
+                "update"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "updates"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.BusinessScheduleStatsResponse": {
+        "properties": {
+          "average_hours_per_staff": {
+            "type": "number"
+          },
+          "business_id": {
+            "type": "string"
+          },
+          "period_end": {
+            "type": "string"
+          },
+          "period_start": {
+            "type": "string"
+          },
+          "staff_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffScheduleStatsResponse"
+            },
+            "type": "array"
+          },
+          "total_overtime_hours": {
+            "type": "number"
+          },
+          "total_shifts": {
+            "type": "integer"
+          },
+          "total_staff": {
+            "type": "integer"
+          },
+          "total_time_off_requests": {
+            "type": "integer"
+          },
+          "total_working_hours": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.CopyScheduleRequest": {
+        "properties": {
+          "action_by": {
+            "type": "string"
+          },
+          "overwrite_existing": {
+            "type": "boolean"
+          },
+          "source_end_date": {
+            "type": "string"
+          },
+          "source_start_date": {
+            "type": "string"
+          },
+          "staff_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "target_start_date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_by",
+          "source_end_date",
+          "source_start_date",
+          "staff_ids",
+          "target_start_date"
         ],
         "type": "object"
       },
@@ -224,6 +407,34 @@
         },
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.CreateScheduleTemplateRequest": {
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 3,
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WeeklyScheduleTemplateDTO"
+          },
+          "staff_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "schedule",
+          "staff_id"
+        ],
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.CreateServiceRequest": {
         "properties": {
           "duration_min": {
@@ -244,6 +455,55 @@
           "duration_min",
           "name",
           "price_cents"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.CreateShiftRequest": {
+        "properties": {
+          "break_end_time": {
+            "type": "string"
+          },
+          "break_start_time": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "end_time": {
+            "description": "\"18:00\"",
+            "type": "string"
+          },
+          "notes": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "shift_date": {
+            "description": "\"2025-01-15\"",
+            "type": "string"
+          },
+          "shift_type": {
+            "enum": [
+              "regular",
+              "overtime",
+              "holiday",
+              "emergency"
+            ],
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "start_time": {
+            "description": "\"09:00\"",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_by",
+          "end_time",
+          "shift_date",
+          "staff_id",
+          "start_time"
         ],
         "type": "object"
       },
@@ -294,12 +554,155 @@
         ],
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.CreateTimeOffRequest": {
+        "properties": {
+          "end_date": {
+            "type": "string"
+          },
+          "half_day_type": {
+            "enum": [
+              "morning",
+              "afternoon"
+            ],
+            "type": "string"
+          },
+          "is_half_day": {
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "vacation",
+              "sick_leave",
+              "personal_day",
+              "emergency"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "end_date",
+          "reason",
+          "requested_by",
+          "staff_id",
+          "start_date",
+          "type"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.DayScheduleResponse": {
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "day_of_week": {
+            "type": "string"
+          },
+          "has_time_off": {
+            "type": "boolean"
+          },
+          "is_working_day": {
+            "type": "boolean"
+          },
+          "shifts": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ShiftResponse"
+            },
+            "type": "array"
+          },
+          "time_off_reason": {
+            "type": "string"
+          },
+          "total_hours": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.DayScheduleTemplateDTO": {
+        "properties": {
+          "break_end_time": {
+            "description": "\"13:00\"",
+            "type": "string"
+          },
+          "break_start_time": {
+            "description": "\"12:00\"",
+            "type": "string"
+          },
+          "end_time": {
+            "description": "\"18:00\"",
+            "type": "string"
+          },
+          "is_working_day": {
+            "type": "boolean"
+          },
+          "shifts": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ShiftTemplateDTO"
+            },
+            "type": "array"
+          },
+          "start_time": {
+            "description": "\"09:00\"",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.ErrorResponse": {
         "properties": {
           "error": {
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.GenerateScheduleRequest": {
+        "properties": {
+          "end_date": {
+            "type": "string"
+          },
+          "generated_by": {
+            "type": "string"
+          },
+          "overwrite_existing": {
+            "type": "boolean"
+          },
+          "staff_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "template_id": {
+            "type": "string"
+          },
+          "use_template": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "end_date",
+          "generated_by",
+          "staff_ids",
+          "start_date"
+        ],
         "type": "object"
       },
       "github_com_ialekseychuk_my-place_internal_dto.LoginRequest": {
@@ -329,6 +732,26 @@
         },
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.QuickStaffActionRequest": {
+        "properties": {
+          "action_by": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_by",
+          "date",
+          "reason"
+        ],
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.RefreshTokenRequest": {
         "properties": {
           "refresh_token": {
@@ -344,6 +767,38 @@
         "properties": {
           "token": {
             "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_domain.AuthToken"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.ScheduleTemplateResponse": {
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WeeklyScheduleTemplateDTO"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "staff_name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -374,6 +829,90 @@
         },
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.ShiftResponse": {
+        "properties": {
+          "break_end_time": {
+            "type": "string"
+          },
+          "break_start_time": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_available": {
+            "type": "boolean"
+          },
+          "is_manually_disabled": {
+            "type": "boolean"
+          },
+          "manual_disable_reason": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "shift_date": {
+            "type": "string"
+          },
+          "shift_type": {
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "staff_name": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "updated_by": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.ShiftTemplateDTO": {
+        "properties": {
+          "break_end_time": {
+            "type": "string"
+          },
+          "break_start_time": {
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "shift_type": {
+            "enum": [
+              "regular",
+              "overtime"
+            ],
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "end_time",
+          "start_time"
+        ],
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.SlotResponse": {
         "properties": {
           "end": {
@@ -383,6 +922,26 @@
             "type": "string"
           },
           "start": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.StaffAvailabilityResponse": {
+        "properties": {
+          "is_available": {
+            "type": "boolean"
+          },
+          "position": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "staff_name": {
             "type": "string"
           }
         },
@@ -433,6 +992,47 @@
         },
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.StaffScheduleStatsResponse": {
+        "properties": {
+          "average_hours_per_day": {
+            "type": "number"
+          },
+          "period_end": {
+            "type": "string"
+          },
+          "period_start": {
+            "type": "string"
+          },
+          "sick_leave_days": {
+            "type": "integer"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "staff_name": {
+            "type": "string"
+          },
+          "total_overtime_hours": {
+            "type": "number"
+          },
+          "total_shifts": {
+            "type": "integer"
+          },
+          "total_time_off_days": {
+            "type": "integer"
+          },
+          "total_working_hours": {
+            "type": "number"
+          },
+          "utilization_rate": {
+            "type": "number"
+          },
+          "vacation_days": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.StaffServiceResponse": {
         "properties": {
           "created_at": {
@@ -457,6 +1057,164 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.StaffWeeklyScheduleResponse": {
+        "properties": {
+          "days": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleResponse"
+            },
+            "description": "\"2025-01-13\" -\u003e DayScheduleResponse",
+            "type": "object"
+          },
+          "position": {
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "staff_name": {
+            "type": "string"
+          },
+          "time_off": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.TimeOffResponse"
+            },
+            "type": "array"
+          },
+          "total_hours": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.TimeOffResponse": {
+        "properties": {
+          "approved_by": {
+            "type": "string"
+          },
+          "comments": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "half_day_type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_half_day": {
+            "type": "boolean"
+          },
+          "processed_at": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "requested_at": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "staff_name": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.UpdateScheduleTemplateRequest": {
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 3,
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WeeklyScheduleTemplateDTO"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.UpdateShiftAvailabilityRequest": {
+        "properties": {
+          "action_by": {
+            "type": "string"
+          },
+          "is_available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_by",
+          "is_available"
+        ],
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.UpdateShiftRequest": {
+        "properties": {
+          "break_end_time": {
+            "type": "string"
+          },
+          "break_start_time": {
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "is_available": {
+            "type": "boolean"
+          },
+          "notes": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "shift_type": {
+            "enum": [
+              "regular",
+              "overtime",
+              "holiday",
+              "emergency"
+            ],
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "updated_by": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "updated_by"
+        ],
         "type": "object"
       },
       "github_com_ialekseychuk_my-place_internal_dto.UpdateStaffRequest": {
@@ -504,6 +1262,27 @@
         },
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.UpdateTimeOffRequest": {
+        "properties": {
+          "approval_by": {
+            "type": "string"
+          },
+          "comments": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.UserProfileResponse": {
         "properties": {
           "business_id": {
@@ -534,6 +1313,49 @@
             "type": "string"
           },
           "updated_at": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.WeeklyScheduleTemplateDTO": {
+        "properties": {
+          "friday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleTemplateDTO"
+          },
+          "monday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleTemplateDTO"
+          },
+          "saturday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleTemplateDTO"
+          },
+          "sunday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleTemplateDTO"
+          },
+          "thursday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleTemplateDTO"
+          },
+          "tuesday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleTemplateDTO"
+          },
+          "wednesday": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleTemplateDTO"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.WeeklyScheduleViewResponse": {
+        "properties": {
+          "staff_schedules": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffWeeklyScheduleResponse"
+            },
+            "type": "array"
+          },
+          "week_end_date": {
+            "type": "string"
+          },
+          "week_start_date": {
             "type": "string"
           }
         },
@@ -1251,6 +2073,2871 @@
         ]
       }
     },
+    "/api/v1/businesses/{businessID}/schedule/availability/available-staff": {
+      "get": {
+        "description": "Get list of available staff for a specific time slot",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start time (HH:MM)",
+            "in": "query",
+            "name": "start_time",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End time (HH:MM)",
+            "in": "query",
+            "name": "end_time",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff IDs to exclude",
+            "in": "query",
+            "name": "exclude_staff_ids",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffAvailabilityResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get available staff",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/availability/logs/{staffID}": {
+      "get": {
+        "description": "Get availability change logs for a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date filter (YYYY-MM-DD)",
+            "in": "query",
+            "name": "start_date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date filter (YYYY-MM-DD)",
+            "in": "query",
+            "name": "end_date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Limit number of results (default: 50)",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AvailabilityLogResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get availability logs",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/availability/staff/{staffID}/check": {
+      "get": {
+        "description": "Check if staff is available for a specific time slot",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start time (HH:MM)",
+            "in": "query",
+            "name": "start_time",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End time (HH:MM)",
+            "in": "query",
+            "name": "end_time",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Check staff availability",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/quick-actions/copy-schedule": {
+      "post": {
+        "description": "Copy schedule from one period to another",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CopyScheduleRequest"
+              }
+            }
+          },
+          "description": "Schedule copy data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Copy schedule",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/quick-actions/staff/{staffID}/disable": {
+      "post": {
+        "description": "Quickly disable all shifts for a staff member on a specific date",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.QuickStaffActionRequest"
+              }
+            }
+          },
+          "description": "Quick action data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Quick disable staff",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/quick-actions/staff/{staffID}/enable": {
+      "post": {
+        "description": "Quickly enable all shifts for a staff member on a specific date",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.QuickStaffActionRequest"
+              }
+            }
+          },
+          "description": "Quick action data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Quick enable staff",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/shifts": {
+      "post": {
+        "description": "Create a new work shift for staff",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateShiftRequest"
+              }
+            }
+          },
+          "description": "Shift data",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ShiftResponse"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Schedule conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create shift",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/shifts/bulk": {
+      "delete": {
+        "description": "Delete multiple shifts at once",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.BulkDeleteShiftsRequest"
+              }
+            }
+          },
+          "description": "Bulk shift deletion",
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Bulk delete shifts",
+        "tags": [
+          "Schedule"
+        ]
+      },
+      "post": {
+        "description": "Create multiple shifts at once",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.BulkCreateShiftsRequest"
+              }
+            }
+          },
+          "description": "Bulk shifts data",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ShiftResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Schedule conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Bulk create shifts",
+        "tags": [
+          "Schedule"
+        ]
+      },
+      "put": {
+        "description": "Update multiple shifts at once",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.BulkUpdateShiftsRequest"
+              }
+            }
+          },
+          "description": "Bulk shift updates",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ShiftResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Bulk update shifts",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/shifts/{shiftID}": {
+      "delete": {
+        "description": "Delete a work shift",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Shift ID",
+            "in": "path",
+            "name": "shiftID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Shift not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Delete shift",
+        "tags": [
+          "Schedule"
+        ]
+      },
+      "get": {
+        "description": "Get a specific shift by ID",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Shift ID",
+            "in": "path",
+            "name": "shiftID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ShiftResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Shift not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get shift",
+        "tags": [
+          "Schedule"
+        ]
+      },
+      "put": {
+        "description": "Update an existing work shift",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Shift ID",
+            "in": "path",
+            "name": "shiftID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateShiftRequest"
+              }
+            }
+          },
+          "description": "Shift update data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ShiftResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Shift not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Schedule conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update shift",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/shifts/{shiftID}/availability": {
+      "put": {
+        "description": "Update the availability status of a shift",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Shift ID",
+            "in": "path",
+            "name": "shiftID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateShiftAvailabilityRequest"
+              }
+            }
+          },
+          "description": "Availability update data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Shift not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update shift availability",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/staff/{staffID}/shifts": {
+      "get": {
+        "description": "Get shifts for a staff member within date range",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "start_date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "end_date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ShiftResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff shifts",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/staff/{staffID}/shifts/generate": {
+      "post": {
+        "description": "Generate schedule for staff based on templates",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.GenerateScheduleRequest"
+              }
+            }
+          },
+          "description": "Schedule generation parameters",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Generate staff schedule",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/staff/{staffID}/templates": {
+      "get": {
+        "description": "Get all schedule templates for a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ScheduleTemplateResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff schedule templates",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/staff/{staffID}/templates/{templateID}/set-default": {
+      "post": {
+        "description": "Set a template as default for a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Template ID",
+            "in": "path",
+            "name": "templateID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Template not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Set default template",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/stats/business": {
+      "get": {
+        "description": "Get detailed schedule statistics for the entire business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "start_date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "end_date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Include per-staff breakdown",
+            "in": "query",
+            "name": "include_staff_breakdown",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.BusinessScheduleStatsResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get business schedule statistics",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/stats/staff/{staffID}": {
+      "get": {
+        "description": "Get detailed schedule statistics for a specific staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "start_date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "end_date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffScheduleStatsResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff schedule statistics",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/templates": {
+      "post": {
+        "description": "Create a new schedule template for staff",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateScheduleTemplateRequest"
+              }
+            }
+          },
+          "description": "Schedule template data",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ScheduleTemplateResponse"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create schedule template",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/templates/{templateID}": {
+      "delete": {
+        "description": "Delete a schedule template",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Template ID",
+            "in": "path",
+            "name": "templateID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Template not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Delete schedule template",
+        "tags": [
+          "Schedule"
+        ]
+      },
+      "get": {
+        "description": "Get a specific schedule template by ID",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Template ID",
+            "in": "path",
+            "name": "templateID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ScheduleTemplateResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Template not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get schedule template",
+        "tags": [
+          "Schedule"
+        ]
+      },
+      "put": {
+        "description": "Update an existing schedule template",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Template ID",
+            "in": "path",
+            "name": "templateID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateScheduleTemplateRequest"
+              }
+            }
+          },
+          "description": "Template update data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ScheduleTemplateResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Template not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update schedule template",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/time-off": {
+      "post": {
+        "description": "Create a new time off request for staff",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateTimeOffRequest"
+              }
+            }
+          },
+          "description": "Time off request data",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.TimeOffResponse"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create time off request",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/time-off/business": {
+      "get": {
+        "description": "Get all time off requests for the business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Status filter (pending, approved, rejected, cancelled)",
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date filter (YYYY-MM-DD)",
+            "in": "query",
+            "name": "start_date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date filter (YYYY-MM-DD)",
+            "in": "query",
+            "name": "end_date",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.TimeOffResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get business time off requests",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/time-off/staff/{staffID}": {
+      "get": {
+        "description": "Get all time off requests for a specific staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date filter (YYYY-MM-DD)",
+            "in": "query",
+            "name": "start_date",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date filter (YYYY-MM-DD)",
+            "in": "query",
+            "name": "end_date",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.TimeOffResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff time off requests",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/time-off/{requestID}": {
+      "delete": {
+        "description": "Delete a time off request",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Request ID",
+            "in": "path",
+            "name": "requestID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Request not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Delete time off request",
+        "tags": [
+          "Schedule"
+        ]
+      },
+      "get": {
+        "description": "Get a specific time off request by ID",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Request ID",
+            "in": "path",
+            "name": "requestID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.TimeOffResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Request not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get time off request",
+        "tags": [
+          "Schedule"
+        ]
+      },
+      "put": {
+        "description": "Update a time off request (status, approval, etc.)",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Request ID",
+            "in": "path",
+            "name": "requestID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateTimeOffRequest"
+              }
+            }
+          },
+          "description": "Time off update data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.TimeOffResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Request not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update time off request",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/views/monthly": {
+      "get": {
+        "description": "Get monthly schedule view for all or selected staff",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Year",
+            "in": "query",
+            "name": "year",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Month (1-12)",
+            "in": "query",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Staff IDs to filter",
+            "in": "query",
+            "name": "staff_ids",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WeeklyScheduleViewResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get monthly schedule view",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/views/staff/{staffID}/day": {
+      "get": {
+        "description": "Get schedule for a specific staff member on a specific day",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff day schedule",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/views/staff/{staffID}/weekly": {
+      "get": {
+        "description": "Get weekly schedule for a specific staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Week start date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "week_start_date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffWeeklyScheduleResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff weekly schedule",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/schedule/views/weekly": {
+      "get": {
+        "description": "Get weekly schedule view for all or selected staff",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Week start date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "week_start_date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff IDs to filter",
+            "in": "query",
+            "name": "staff_ids",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.WeeklyScheduleViewResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get weekly schedule view",
+        "tags": [
+          "Schedule"
+        ]
+      }
+    },
     "/api/v1/businesses/{businessID}/services": {
       "get": {
         "description": "Get all services for a business",
@@ -1427,6 +5114,382 @@
         "summary": "Create a new service",
         "tags": [
           "Service"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/staff-services/{staffID}/services": {
+      "get": {
+        "description": "Gets all services assigned to a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get staff services",
+        "tags": [
+          "StaffServices"
+        ]
+      },
+      "post": {
+        "description": "Assigns a service to a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AssignServiceToStaffRequest"
+              }
+            }
+          },
+          "description": "Service assignment request",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffServiceResponse"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff or service not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Assign service to staff",
+        "tags": [
+          "StaffServices"
+        ]
+      },
+      "put": {
+        "description": "Replaces all services assigned to a staff member with new ones",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AssignMultipleServicesToStaffRequest"
+              }
+            }
+          },
+          "description": "Services assignment request",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Staff not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Replace staff services",
+        "tags": [
+          "StaffServices"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/staff-services/{staffID}/services/{serviceID}": {
+      "delete": {
+        "description": "Removes a service assignment from a staff member",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "path",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Service ID",
+            "in": "path",
+            "name": "serviceID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Assignment not found"
+          },
+          "500": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Unassign service from staff",
+        "tags": [
+          "StaffServices"
         ]
       }
     },
@@ -1749,382 +5812,6 @@
         "summary": "Update staff",
         "tags": [
           "Staff"
-        ]
-      }
-    },
-    "/api/v1/businesses/{businessID}/staffs/{staffID}/services": {
-      "get": {
-        "description": "Gets all services assigned to a staff member",
-        "parameters": [
-          {
-            "description": "Business ID",
-            "in": "path",
-            "name": "businessID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Staff ID",
-            "in": "path",
-            "name": "staffID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Unauthorized"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Staff not found"
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
-        "summary": "Get staff services",
-        "tags": [
-          "StaffServices"
-        ]
-      },
-      "post": {
-        "description": "Assigns a service to a staff member",
-        "parameters": [
-          {
-            "description": "Business ID",
-            "in": "path",
-            "name": "businessID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Staff ID",
-            "in": "path",
-            "name": "staffID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AssignServiceToStaffRequest"
-              }
-            }
-          },
-          "description": "Service assignment request",
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffServiceResponse"
-                }
-              }
-            },
-            "description": "Created"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Bad request"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Unauthorized"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Staff or service not found"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Validation errors"
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
-        "summary": "Assign service to staff",
-        "tags": [
-          "StaffServices"
-        ]
-      },
-      "put": {
-        "description": "Replaces all services assigned to a staff member with new ones",
-        "parameters": [
-          {
-            "description": "Business ID",
-            "in": "path",
-            "name": "businessID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Staff ID",
-            "in": "path",
-            "name": "staffID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AssignMultipleServicesToStaffRequest"
-              }
-            }
-          },
-          "description": "Services assignment request",
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Bad request"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Unauthorized"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Staff not found"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Validation errors"
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
-        "summary": "Replace staff services",
-        "tags": [
-          "StaffServices"
-        ]
-      }
-    },
-    "/api/v1/businesses/{businessID}/staffs/{staffID}/services/{serviceID}": {
-      "delete": {
-        "description": "Removes a service assignment from a staff member",
-        "parameters": [
-          {
-            "description": "Business ID",
-            "in": "path",
-            "name": "businessID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Staff ID",
-            "in": "path",
-            "name": "staffID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Service ID",
-            "in": "path",
-            "name": "serviceID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No content"
-          },
-          "401": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Unauthorized"
-          },
-          "404": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Assignment not found"
-          },
-          "500": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
-        "summary": "Unassign service from staff",
-        "tags": [
-          "StaffServices"
         ]
       }
     }
