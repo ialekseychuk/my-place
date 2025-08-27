@@ -250,7 +250,7 @@ export function ScheduleView({ businessID }: ScheduleViewProps) {
                 return (
                   <div
                     key={`${staff.id}-${timeSlot.formattedTime}`}
-                    className={`${colorClasses} border-r ${idx !== timeSlots.length - 1 ? 'border-b' : ''} p-2 min-h-[60px] shadow-sm`}
+                    className={`${colorClasses} border-r border-b p-2 min-h-[20px] shadow-sm`}
                   >
                     <div className="font-medium text-sm truncate">{booking.service_name}</div>
                     <div className="flex items-center text-xs mt-1">
@@ -275,7 +275,7 @@ export function ScheduleView({ businessID }: ScheduleViewProps) {
                 return (
                   <div
                     key={`${staff.id}-${timeSlot.formattedTime}`}
-                    className={`${colorClasses} border-r ${idx !== timeSlots.length - 1 ? 'border-b' : ''} min-h-[60px] shadow-sm`}
+                    className={`${colorClasses} border-r border-b min-h-[20px] shadow-sm`}
                   ></div>
                 )
               }
@@ -284,7 +284,7 @@ export function ScheduleView({ businessID }: ScheduleViewProps) {
               return (
                 <div
                   key={`${staff.id}-${timeSlot.formattedTime}`}
-                  className={`border-r ${idx !== timeSlots.length - 1 ? 'border-b' : ''} min-h-[60px]`}
+                  className={`border-r border-b min-h-[20px]`}
                 >
                 </div>
               )
