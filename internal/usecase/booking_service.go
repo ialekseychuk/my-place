@@ -84,3 +84,41 @@ func (s *BookingService) GetAvailableSlots(ctx context.Context, businessID strin
 
 	return slotResponses, nil
 }
+
+func (s *BookingService) GetBookingsByBusiness(ctx context.Context, businessID string, startDate, endDate *time.Time) ([]*dto.BookingResponse, error) {
+	bookings, err := s.bookingRepo.GetByBusinessID(ctx, businessID, startDate, endDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bookings: %w", err)
+	}
+
+	var bookingResponses []*dto.BookingResponse
+	for _, booking := range bookings {
+		// Get service name
+		service, err := s.serviceRepo.GetById(ctx, booking.ServiceID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get service: %w", err)
+		}
+
+		// Get staff name
+		staff, err := s.staffRepo.GetById(ctx, booking.StaffID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get staff: %w", err)
+		}
+
+		bookingResponses = append(bookingResponses, &dto.BookingResponse{
+			ID:            booking.ID,
+			ServiceID:     booking.ServiceID,
+			ServiceName:   service.Name,
+			StaffID:       booking.StaffID,
+			StaffName:     fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
+			StartAt:       booking.StartAt,
+			EndAt:         booking.EndAt,
+			CustomerName:  booking.CustomerName,
+			CustomerEmail: booking.CustomerEmail,
+			CreatedAt:     booking.CreatedAt,
+			UpdatedAt:     booking.UpdatedAt,
+		})
+	}
+
+	return bookingResponses, nil
+}

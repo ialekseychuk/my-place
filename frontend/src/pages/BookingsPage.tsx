@@ -1,8 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { BookingsManager } from '@/components/BookingsManager'
 import { Button } from '@/components/ui/button'
-import { Plus, Calendar } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/contexts/AuthContext'
+import { Calendar, Plus } from 'lucide-react'
 
 export function BookingsPage() {
+  const { user } = useAuth()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -25,13 +29,17 @@ export function BookingsPage() {
             Список бронирований
           </CardTitle>
           <CardDescription>
-            Здесь будет отображаться список всех бронирований
+            Здесь отображаются все бронирования вашего бизнеса
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            Страница бронирований в разработке...
-          </p>
+          {user?.business_id ? (
+            <BookingsManager businessID={user.business_id} />
+          ) : (
+            <p className="text-muted-foreground">
+              Выберите бизнес для просмотра бронирований
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

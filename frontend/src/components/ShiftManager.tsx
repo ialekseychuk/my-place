@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/contexts/AuthContext'
+import { useNotification } from '@/contexts/NotificationContext'
 import type {
-    CreateShiftRequest,
-    ShiftResponse,
-    UpdateShiftRequest
+  CreateShiftRequest,
+  ShiftResponse,
+  UpdateShiftRequest
 } from '@/services/scheduleService'
 import {
-    ScheduleService
+  ScheduleService
 } from '@/services/scheduleService'
 import { AlertTriangle, Calendar, CheckCircle, Clock, Edit, Plus, Save, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -43,6 +44,7 @@ export function ShiftManager({
   onShiftUpdated 
 }: ShiftManagerProps) {
   const { user } = useAuth()
+  const { showError, showSuccess, showConfirm, showPrompt } = useNotification()
   const [scheduleService] = useState(() => new ScheduleService(businessId))
   const [shifts, setShifts] = useState<ShiftResponse[]>([])
   const [selectedStaffId, setSelectedStaffId] = useState<string>('')
@@ -117,7 +119,7 @@ export function ShiftManager({
 
   const handleCreateShift = async () => {
     if (!shiftForm.staff_id || !shiftForm.shift_date) {
-      alert('Пожалуйста, заполните обязательные поля')
+      showError('Пожалуйста, заполните обязательные поля')
       return
     }
 
@@ -132,7 +134,7 @@ export function ShiftManager({
       onShiftCreated?.(newShift)
     } catch (error) {
       console.error('Error creating shift:', error)
-      alert('Ошибка при создании смены')
+      showError('Ошибка при создании смены')
     }
   }
 
@@ -157,19 +159,28 @@ export function ShiftManager({
       onShiftUpdated?.(updatedShift)
     } catch (error) {
       console.error('Error updating shift:', error)
-      alert('Ошибка при обновлении смены')
+      showError('Ошибка при обновлении смены')
     }
   }
 
   const handleDeleteShift = async (shiftId: string) => {
-    if (!confirm('Вы уверены, что хотите удалить эту смену?')) return
+    const confirmed = await showConfirm({
+      title: 'Удаление смены',
+      description: 'Вы уверены, что хотите удалить эту смену?',
+      variant: 'destructive',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена'
+    })
+    
+    if (!confirmed) return
 
     try {
       await scheduleService.deleteShift(shiftId)
       setShifts(prev => prev.filter(s => s.id !== shiftId))
+      showSuccess('Смена успешно удалена')
     } catch (error) {
       console.error('Error deleting shift:', error)
-      alert('Ошибка при удалении смены')
+      showError('Ошибка при удалении смены')
     }
   }
 
@@ -182,19 +193,23 @@ export function ShiftManager({
       ))
     } catch (error) {
       console.error('Error updating shift availability:', error)
-      alert('Ошибка при изменении доступности смены')
+      showError('Ошибка при изменении доступности смены')
     }
   }
 
   const handleBulkAction = async () => {
     if (selectedShifts.length === 0 || !bulkAction) return
 
-    const reason = prompt(`Укажите причину для ${
-      bulkAction === 'enable' ? 'включения' : 
-      bulkAction === 'disable' ? 'отключения' : 'удаления'
-    } смен:`)
+    const reasonResult = await showPrompt({
+      title: 'Причина действия',
+      description: `Укажите причину для ${
+        bulkAction === 'enable' ? 'включения' : 
+        bulkAction === 'disable' ? 'отключения' : 'удаления'
+      } смен:`,
+      placeholder: 'Введите причину...'
+    })
     
-    if (!reason) return
+    if (!reasonResult.confirmed || !reasonResult.value) return
 
     try {
       // Note: This would need to be implemented on the backend
@@ -203,7 +218,7 @@ export function ShiftManager({
         if (bulkAction === 'delete') {
           await scheduleService.deleteShift(shiftId)
         } else {
-          await scheduleService.updateShiftAvailability(shiftId, bulkAction === 'enable', reason)
+          await scheduleService.updateShiftAvailability(shiftId, bulkAction === 'enable', reasonResult.value)
         }
       }
 
@@ -221,20 +236,21 @@ export function ShiftManager({
 
       setSelectedShifts([])
       setBulkAction('')
+      showSuccess('Массовое действие выполнено успешно')
     } catch (error) {
       console.error('Error performing bulk action:', error)
-      alert('Ошибка при выполнении массовой операции')
+      showError('Ошибка при выполнении массовой операции')
     }
   }
 
   const handleBulkCreateShifts = async () => {
     if (bulkShiftForm.staff_ids.length === 0) {
-      alert('Выберите хотя бы одного сотрудника')
+      showError('Выберите хотя бы одного сотрудника')
       return
     }
 
     if (!bulkShiftForm.start_date || !bulkShiftForm.end_date) {
-      alert('Укажите период создания смен')
+      showError('Укажите период создания смен')
       return
     }
 
@@ -275,10 +291,10 @@ export function ShiftManager({
       setShifts(prev => [...prev, ...createdShifts])
       setIsBulkCreateDialogOpen(false)
       resetBulkForm()
-      alert(`Создано ${createdShifts.length} смен`)
+      showSuccess(`Создано ${createdShifts.length} смен`)
     } catch (error) {
       console.error('Error creating bulk shifts:', error)
-      alert('Ошибка при массовом создании смен')
+      showError('Ошибка при массовом создании смен')
     }
   }
 

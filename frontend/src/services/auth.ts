@@ -1,4 +1,4 @@
-import type { LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse } from '@/types/auth'
+import type { LoginRequest, LoginResponse, RefreshTokenResponse } from '@/types/auth'
 
 class AuthService {
   private readonly baseURL = '/api/v1/auth'
@@ -39,7 +39,7 @@ class AuthService {
           },
         })
       } catch (error) {
-        console.error('Logout API call failed:', error)
+        // Silently handle logout API call failure
       }
     }
 
@@ -114,7 +114,6 @@ class AuthService {
       
       return true
     } catch (error) {
-      console.error('Error checking token validity:', error)
       this.clearTokens()
       return false
     }

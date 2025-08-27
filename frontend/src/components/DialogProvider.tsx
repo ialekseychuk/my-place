@@ -1,5 +1,5 @@
-import React from 'react'
-import { UseDialogState } from '../hooks/use-dialog'
+import type { UseDialogState } from '@/hooks/use-dialog'
+import type { ReactNode } from 'react'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -24,7 +24,7 @@ import { Label } from './ui/label'
 
 interface DialogProviderProps {
   dialogState: UseDialogState
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export function DialogProvider({ dialogState, children }: DialogProviderProps) {

@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/contexts/AuthContext'
 import type {
-    ShiftResponse,
-    WeeklyScheduleViewResponse
+  ShiftResponse,
+  WeeklyScheduleViewResponse
 } from '@/services/scheduleService'
 import { ScheduleService } from '@/services/scheduleService'
 import { AlertCircle, ChevronLeft, ChevronRight, Clock, Edit, Plus, Users } from 'lucide-react'
@@ -56,7 +56,7 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
       )
       setWeeklySchedule(data)
     } catch (error) {
-      console.error('Error loading weekly schedule:', error)
+      // Handle error appropriately
     } finally {
       setLoading(false)
     }

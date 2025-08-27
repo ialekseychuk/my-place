@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import type { ReactNode } from 'react'
-import type { User, LoginRequest } from '@/types/auth'
 import { authService } from '@/services/auth'
+import type { LoginRequest, User } from '@/types/auth'
+import type { ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 
 interface AuthContextType {
   user: User | null
@@ -48,7 +48,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error('Auth check failed:', error)
         authService.clearTokens()
       } finally {
         setIsLoading(false)

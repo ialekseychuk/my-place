@@ -24,6 +24,7 @@ func NewBookingHandler(bookingService *usecase.BookingService) *BookingHandler {
 func (h *BookingHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Post("/", h.CreateBooking)
+	r.Get("/", h.GetBookings)
 	r.Get("/availability", h.GetAvailability)
 	return r
 }
@@ -85,6 +86,63 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+// @Summary Get bookings
+// @Description Get all bookings for a business with optional date filtering
+// @Tags Booking
+// @Accept json
+// @Produce json
+// @Param businessID path string true "Business ID"
+// @Param start_date query string false "Start date in YYYY-MM-DD format"
+// @Param end_date query string false "End date in YYYY-MM-DD format"
+// @Success 200 {array} dto.BookingResponse
+// @Failure 400 {object} dto.ErrorResponse "Bad request"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Security Bearer
+// @Router /api/v1/businesses/{businessID}/bookings [get]
+func (h *BookingHandler) GetBookings(w http.ResponseWriter, r *http.Request) {
+	businessID := chi.URLParam(r, "businessID")
+	if businessID == "" {
+		ErrorResponse(w, http.StatusBadRequest, "business ID is required")
+		return
+	}
+
+	var startDate, endDate *time.Time
+
+	// Parse start_date if provided
+	startDateParam := r.URL.Query().Get("start_date")
+	if startDateParam != "" {
+		sd, err := time.Parse("2006-01-02", startDateParam)
+		if err != nil {
+			ErrorResponse(w, http.StatusBadRequest, "invalid start_date format, use YYYY-MM-DD")
+			return
+		}
+		startDate = &sd
+	}
+
+	// Parse end_date if provided
+	endDateParam := r.URL.Query().Get("end_date")
+	if endDateParam != "" {
+		ed, err := time.Parse("2006-01-02", endDateParam)
+		if err != nil {
+			ErrorResponse(w, http.StatusBadRequest, "invalid end_date format, use YYYY-MM-DD")
+			return
+		}
+		endDate = &ed
+	}
+
+	bookings, err := h.bookingService.GetBookingsByBusiness(r.Context(), businessID, startDate, endDate)
+	if err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(bookings); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // @Summary Get available time slots

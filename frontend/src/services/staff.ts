@@ -1,4 +1,4 @@
-import type { Staff, CreateStaffRequest, UpdateStaffRequest } from '@/types/staff'
+import type { CreateStaffRequest, Staff, UpdateStaffRequest } from '@/types/staff';
 
 class StaffService {
   private readonly baseURL = '/api/v1'
@@ -10,14 +10,15 @@ class StaffService {
         'Content-Type': 'application/json',
         ...this.getAuthHeaders(),
       },
-    })
+    });
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to fetch staff')
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch staff');
     }
 
-    return response.json()
+    const data = await response.json();
+    return data;
   }
 
   async createStaff(businessId: string, staffData: CreateStaffRequest): Promise<Staff> {

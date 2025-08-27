@@ -8,11 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/AuthContext'
 import { apiRequest } from '@/services/api'
 import type {
-  ScheduleStatsResponse,
-  ScheduleTemplateResponse,
-  ShiftResponse,
-  TimeOffResponse,
-  WeeklyScheduleViewResponse
+    ScheduleStatsResponse,
+    ScheduleTemplateResponse,
+    ShiftResponse,
+    TimeOffResponse,
+    WeeklyScheduleViewResponse
 } from '@/services/scheduleService'
 import { ScheduleService } from '@/services/scheduleService'
 import { BarChart3, CalendarDays, Clock, FileText, Plus, Users } from 'lucide-react'
@@ -53,18 +53,14 @@ export function SchedulePage() {
 
   const loadData = async (businessIdParam?: string) => {
     const currentBusinessId = businessIdParam || businessId
-    console.log('loadData called with businessId:', currentBusinessId)
     if (!currentBusinessId) {
-      console.log('No businessId available, skipping loadData')
       return
     }
     
     setLoading(true)
     try {
-      console.log('Loading staff data for business:', currentBusinessId)
       // Load staff data
       const staffData = await apiRequest<Staff[]>(`/api/v1/businesses/${currentBusinessId}/staffs`)
-      console.log('Staff data loaded:', staffData)
       setStaff(staffData.filter((s: Staff) => s.is_active))
       
       // Load business statistics
@@ -73,11 +69,11 @@ export function SchedulePage() {
           const stats = await scheduleService.getBusinessScheduleStats('current_month')
           setBusinessStats(stats)
         } catch (error) {
-          console.error('Error loading business stats:', error)
+          // Silently handle stats loading error
         }
       }
     } catch (error) {
-      console.error('Error loading schedule data:', error)
+      // Handle error appropriately
     } finally {
       setLoading(false)
     }
@@ -90,7 +86,7 @@ export function SchedulePage() {
       const weeklyData = await scheduleService.getWeeklyScheduleView(selectedWeek)
       setWeeklySchedule(weeklyData)
     } catch (error) {
-      console.error('Error loading weekly schedule:', error)
+      // Handle error appropriately
     }
   }
 
@@ -111,12 +107,10 @@ export function SchedulePage() {
   }
 
   const handleTemplateCreated = (template: ScheduleTemplateResponse) => {
-    console.log('Template created:', template)
     // Optionally refresh data or show notification
   }
 
   const handleShiftCreated = (shift: ShiftResponse) => {
-    console.log('Shift created:', shift)
     // Refresh weekly schedule if we're on calendar tab
     if (activeTab === 'calendar') {
       loadWeeklySchedule()
@@ -124,7 +118,6 @@ export function SchedulePage() {
   }
 
   const handleShiftUpdated = (shift: ShiftResponse) => {
-    console.log('Shift updated:', shift)
     // Refresh weekly schedule if we're on calendar tab
     if (activeTab === 'calendar') {
       loadWeeklySchedule()
@@ -132,7 +125,6 @@ export function SchedulePage() {
   }
 
   const handleTimeOffCreated = (timeOff: TimeOffResponse) => {
-    console.log('Time off created:', timeOff)
     // Refresh weekly schedule if we're on calendar tab
     if (activeTab === 'calendar') {
       loadWeeklySchedule()
@@ -140,7 +132,6 @@ export function SchedulePage() {
   }
 
   const handleTimeOffUpdated = (timeOff: TimeOffResponse) => {
-    console.log('Time off updated:', timeOff)
     // Refresh weekly schedule if we're on calendar tab
     if (activeTab === 'calendar') {
       loadWeeklySchedule()
@@ -208,11 +199,9 @@ export function SchedulePage() {
               staff={staff}
               businessId={businessId}
               onShiftClick={(shift) => {
-                console.log('Shift clicked:', shift)
                 // You can add edit functionality here
               }}
               onDateClick={(date, staffId) => {
-                console.log('Date clicked:', date, 'for staff:', staffId)
                 // You can add quick shift creation here
                 setActiveTab('shifts')
               }}

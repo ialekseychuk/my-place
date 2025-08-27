@@ -1,28 +1,24 @@
-import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import React, { useState } from 'react'
 //import { Badge } from '@/components/ui/badge'
-import { 
-  Building2, 
-  User, 
-  Settings, 
-  CheckCircle, 
-  ChevronLeft, 
-  ChevronRight,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Clock,
-  Users
-} from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  Building2,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  Phone,
+  Settings,
+  User
+} from 'lucide-react'
 
 interface RegistrationData {
   // Business Information
@@ -73,12 +69,12 @@ const businessTypes = [
   { value: 'massage', label: 'Массажный салон' },
   { value: 'cosmetology', label: 'Косметология' },
   { value: 'fitness', label: 'Фитнес-центр' },
-  { value: 'medical', label: 'Медицинский центр' },
   { value: 'other', label: 'Другое' }
 ]
 
 const timezones = [
   { value: 'Europe/Moscow', label: 'Москва (UTC+3)' },
+  { value: 'Europe/Minsk', label: 'Минск (UTC+2)' },
   { value: 'Europe/Kiev', label: 'Киев (UTC+2)' },
   { value: 'Asia/Almaty', label: 'Алматы (UTC+6)' },
   { value: 'Asia/Tashkent', label: 'Ташкент (UTC+5)' }
@@ -86,6 +82,7 @@ const timezones = [
 
 const currencies = [
   { value: 'RUB', label: '₽ Российский рубль' },
+  { value: 'BYN', label: 'р. Белорусский рубль' },
   { value: 'USD', label: '$ Доллар США' },
   { value: 'EUR', label: '€ Евро' },
   { value: 'KZT', label: '₸ Казахстанский тенге' }

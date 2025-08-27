@@ -69,6 +69,7 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger(logger))
+	r.Use(middleware.CORS) // Add CORS middleware
 
 	// JWT middleware
 	jwtMiddleware := middleware.JWTMiddleware(authService)

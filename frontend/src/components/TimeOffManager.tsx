@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/contexts/AuthContext'
+import { useNotification } from '@/contexts/NotificationContext'
 import type {
     CreateTimeOffRequest,
     TimeOffResponse
@@ -40,6 +41,7 @@ export function TimeOffManager({
   onTimeOffUpdated 
 }: TimeOffManagerProps) {
   const { user } = useAuth()
+  const { showError, showSuccess, showConfirm, showPrompt } = useNotification()
   const [scheduleService] = useState(() => new ScheduleService(businessId))
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffResponse[]>([])
   const [selectedStaffId, setSelectedStaffId] = useState<string>('')
@@ -82,12 +84,12 @@ export function TimeOffManager({
 
   const handleCreateTimeOff = async () => {
     if (!timeOffForm.staff_id || !timeOffForm.start_date || !timeOffForm.end_date || !timeOffForm.reason) {
-      alert('Пожалуйста, заполните все обязательные поля')
+      showError('Пожалуйста, заполните все обязательные поля')
       return
     }
 
     if (new Date(timeOffForm.start_date) > new Date(timeOffForm.end_date)) {
-      alert('Дата начала не может быть позже даты окончания')
+      showError('Дата начала не может быть позже даты окончания')
       return
     }
 
@@ -100,9 +102,10 @@ export function TimeOffManager({
       setIsCreateDialogOpen(false)
       resetForm()
       onTimeOffCreated?.(newTimeOff)
+      showSuccess('Заявка на отпуск успешно создана')
     } catch (error) {
       console.error('Error creating time off request:', error)
-      alert('Ошибка при создании заявки на отпуск')
+      showError('Ошибка при создании заявки на отпуск')
     }
   }
 
@@ -115,21 +118,31 @@ export function TimeOffManager({
       })
       setTimeOffRequests(prev => prev.map(t => t.id === requestId ? updatedTimeOff : t))
       onTimeOffUpdated?.(updatedTimeOff)
+      showSuccess(`Статус заявки обновлён: ${status === 'approved' ? 'Одобрено' : 'Отклонено'}`)
     } catch (error) {
       console.error('Error updating time off status:', error)
-      alert('Ошибка при обновлении статуса заявки')
+      showError('Ошибка при обновлении статуса заявки')
     }
   }
 
   const handleDeleteTimeOff = async (requestId: string) => {
-    if (!confirm('Вы уверены, что хотите удалить эту заявку?')) return
+    const confirmed = await showConfirm({
+      title: 'Удаление заявки',
+      description: 'Вы уверены, что хотите удалить эту заявку?',
+      variant: 'destructive',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена'
+    })
+    
+    if (!confirmed) return
 
     try {
       await scheduleService.deleteTimeOffRequest(requestId)
       setTimeOffRequests(prev => prev.filter(t => t.id !== requestId))
+      showSuccess('Заявка успешно удалена')
     } catch (error) {
       console.error('Error deleting time off request:', error)
-      alert('Ошибка при удалении заявки')
+      showError('Ошибка при удалении заявки')
     }
   }
 

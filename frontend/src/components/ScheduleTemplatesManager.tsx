@@ -1,3 +1,4 @@
+import { DatePickerDialog } from '@/components/DatePickerDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,14 +9,15 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/contexts/AuthContext'
+import { useNotification } from '@/contexts/NotificationContext'
 import type {
-    CreateScheduleTemplateRequest,
-    DayScheduleTemplate,
-    ScheduleTemplateResponse,
-    WeeklyScheduleTemplate
+  CreateScheduleTemplateRequest,
+  DayScheduleTemplate,
+  ScheduleTemplateResponse,
+  WeeklyScheduleTemplate
 } from '@/services/scheduleService'
 import {
-    ScheduleService
+  ScheduleService
 } from '@/services/scheduleService'
 import { Calendar, Edit, FileText, Plus, Save, Star, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -36,12 +38,15 @@ interface ScheduleTemplatesManagerProps {
 
 export function ScheduleTemplatesManager({ staff, businessId, onTemplateCreated }: ScheduleTemplatesManagerProps) {
   const { user } = useAuth()
+  const { showError, showSuccess, showConfirm, showPrompt } = useNotification()
   const [scheduleService] = useState(() => new ScheduleService(businessId))
   const [templates, setTemplates] = useState<ScheduleTemplateResponse[]>([])
   const [selectedStaffId, setSelectedStaffId] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<ScheduleTemplateResponse | null>(null)
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+  const [currentTemplateId, setCurrentTemplateId] = useState<string>('')
 
   // Form state
   const [templateForm, setTemplateForm] = useState<CreateScheduleTemplateRequest>({
@@ -95,7 +100,7 @@ export function ScheduleTemplatesManager({ staff, businessId, onTemplateCreated 
 
   const handleCreateTemplate = async () => {
     if (!templateForm.staff_id || !templateForm.name) {
-      alert('Пожалуйста, заполните обязательные поля')
+      showError('Пожалуйста, заполните обязательные поля')
       return
     }
 
@@ -105,9 +110,10 @@ export function ScheduleTemplatesManager({ staff, businessId, onTemplateCreated 
       setIsCreateDialogOpen(false)
       resetForm()
       onTemplateCreated?.(newTemplate)
+      showSuccess('Шаблон успешно создан')
     } catch (error) {
       console.error('Error creating template:', error)
-      alert('Ошибка при создании шаблона')
+      showError('Ошибка при создании шаблона')
     }
   }
 
@@ -119,21 +125,31 @@ export function ScheduleTemplatesManager({ staff, businessId, onTemplateCreated 
       setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? updatedTemplate : t))
       setEditingTemplate(null)
       resetForm()
+      showSuccess('Шаблон успешно обновлён')
     } catch (error) {
       console.error('Error updating template:', error)
-      alert('Ошибка при обновлении шаблона')
+      showError('Ошибка при обновлении шаблона')
     }
   }
 
   const handleDeleteTemplate = async (templateId: string) => {
-    if (!confirm('Вы уверены, что хотите удалить этот шаблон?')) return
+    const confirmed = await showConfirm({
+      title: 'Удаление шаблона',
+      description: 'Вы уверены, что хотите удалить этот шаблон?',
+      variant: 'destructive',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена'
+    })
+    
+    if (!confirmed) return
 
     try {
       await scheduleService.deleteScheduleTemplate(templateId)
       setTemplates(prev => prev.filter(t => t.id !== templateId))
+      showSuccess('Шаблон успешно удалён')
     } catch (error) {
       console.error('Error deleting template:', error)
-      alert('Ошибка при удалении шаблона')
+      showError('Ошибка при удалении шаблона')
     }
   }
 
@@ -146,22 +162,38 @@ export function ScheduleTemplatesManager({ staff, businessId, onTemplateCreated 
         ...t,
         is_default: t.id === templateId
       })))
+      showSuccess('Шаблон установлен по умолчанию')
     } catch (error) {
       console.error('Error setting default template:', error)
-      alert('Ошибка при установке шаблона по умолчанию')
+      showError('Ошибка при установке шаблона по умолчанию')
     }
   }
 
-  const handleGenerateSchedule = async (templateId: string) => {
+  const handleGenerateSchedule = (templateId: string) => {
     if (!selectedStaffId) return
+    
+    setCurrentTemplateId(templateId)
+    setIsDatePickerOpen(true)
+  }
 
-    const startDate = prompt('Введите дату начала (YYYY-MM-DD):')
-    if (!startDate) return
+  const handleDateConfirm = async (startDate: string) => {
+    if (!selectedStaffId || !currentTemplateId) return
 
-    const weeksCount = prompt('Количество недель (по умолчанию 1):')
-    const weeks = parseInt(weeksCount || '1')
+    const weeksResult = await showPrompt({
+      title: 'Количество недель',
+      description: 'Укажите количество недель:',
+      defaultValue: '1',
+      placeholder: '1'
+    })
+    if (!weeksResult.confirmed) return
+    const weeks = parseInt(weeksResult.value || '1')
 
-    const overwriteExisting = confirm('Перезаписать существующие смены?')
+    const overwriteExisting = await showConfirm({
+      title: 'Перезапись смен',
+      description: 'Перезаписать существующие смены?',
+      confirmText: 'Перезаписать',
+      cancelText: 'Оставить'
+    })
 
     try {
       const endDate = new Date(startDate)
@@ -170,14 +202,16 @@ export function ScheduleTemplatesManager({ staff, businessId, onTemplateCreated 
       await scheduleService.generateStaffSchedule(selectedStaffId, {
         start_date: startDate,
         end_date: endDate.toISOString().split('T')[0],
-        template_id: templateId,
+        template_id: currentTemplateId,
         overwrite_existing: overwriteExisting
       })
 
-      alert(`Расписание создано на ${weeks} недель`)
+      showSuccess(`Расписание создано на ${weeks} недель`)
     } catch (error) {
       console.error('Error generating schedule:', error)
-      alert('Ошибка при создании расписания')
+      showError('Ошибка при создании расписания')
+    } finally {
+      setCurrentTemplateId('')
     }
   }
 
@@ -636,6 +670,20 @@ export function ScheduleTemplatesManager({ staff, businessId, onTemplateCreated 
           )}
         </div>
       )}
+      
+      {/* Date Picker Dialog for Schedule Generation */}
+      <DatePickerDialog
+        isOpen={isDatePickerOpen}
+        onOpenChange={setIsDatePickerOpen}
+        title="Генерация расписания"
+        description="Выберите дату начала для генерации расписания:"
+        onConfirm={handleDateConfirm}
+        onCancel={() => {
+          setIsDatePickerOpen(false)
+          setCurrentTemplateId('')
+        }}
+        defaultDate={new Date().toISOString().split('T')[0]}
+      />
     </div>
   )
 }
