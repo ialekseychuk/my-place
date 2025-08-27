@@ -49,9 +49,7 @@ func (h *BusinessHandler) CreateBusiness(w http.ResponseWriter, r *http.Request)
 	}
 
 	if errs := validate.Struct(req); errs != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(map[string]any{"errors": errs})
+		ValidationErrorsResponse(w, http.StatusUnprocessableEntity, errs)
 		return
 	}
 	b, err := h.uc.CreateBusiness(r.Context(), req.BusinessName, req.Timezone)
@@ -83,8 +81,7 @@ func (h *BusinessHandler) RegisterBusiness(w http.ResponseWriter, r *http.Reques
 	}
 
 	if errs := validate.Struct(req); errs != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(map[string]any{"errors": errs})
+		ValidationErrorsResponse(w, http.StatusBadRequest, errs)
 		return
 	}
 

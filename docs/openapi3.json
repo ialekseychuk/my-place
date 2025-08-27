@@ -126,10 +126,10 @@
       },
       "github_com_ialekseychuk_my-place_internal_dto.BookingResponse": {
         "properties": {
-          "created_at": {
+          "client_id": {
             "type": "string"
           },
-          "customer_email": {
+          "created_at": {
             "type": "string"
           },
           "customer_name": {
@@ -266,6 +266,46 @@
         },
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.ClientListResponse": {
+        "properties": {
+          "clients": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ClientResponse"
+            },
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.PaginationInfo"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.ClientResponse": {
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.CopyScheduleRequest": {
         "properties": {
           "action_by": {
@@ -310,6 +350,9 @@
             "minLength": 2,
             "type": "string"
           },
+          "customer_phone": {
+            "type": "string"
+          },
           "service_id": {
             "type": "string"
           },
@@ -321,8 +364,8 @@
           }
         },
         "required": [
-          "customer_email",
           "customer_name",
+          "customer_phone",
           "service_id",
           "staff_id",
           "start_at"
@@ -766,6 +809,23 @@
           },
           "user": {
             "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_domain.User"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.PaginationInfo": {
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pages": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
           }
         },
         "type": "object"
@@ -2192,6 +2252,110 @@
         "summary": "Get available time slots",
         "tags": [
           "Booking"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/clients": {
+      "get": {
+        "description": "Get paginated list of clients",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number",
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items per page",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Search query",
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ClientListResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get clients",
+        "tags": [
+          "Clients"
         ]
       }
     },
