@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ialekseychuk/my-place/internal/domain"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -124,15 +125,41 @@ func (r *scheduleRepository) GetScheduleTemplatesByStaff(ctx context.Context, st
 }
 
 func (r *scheduleRepository) UpdateScheduleTemplate(ctx context.Context, template *domain.ScheduleTemplate) error {
-	return fmt.Errorf("not implemented yet")
+	_, err := r.db.Exec(ctx,
+		`UPDATE schedule_templates 
+	SET name = $1, description = $2, is_default = $3, schedule = $4, updated_at = $5 
+	WHERE id = $6`,
+		template.Name, template.Description, template.IsDefault, template.Schedule, template.UpdatedAt, template.ID)
+
+	return err
 }
 
 func (r *scheduleRepository) DeleteScheduleTemplate(ctx context.Context, id string) error {
-	return fmt.Errorf("not implemented yet")
+	_, err := r.db.Exec(ctx, `DELETE FROM schedule_templates WHERE id = `, id)
+	return err
 }
 
 func (r *scheduleRepository) SetDefaultTemplate(ctx context.Context, staffID, templateID string) error {
-	return fmt.Errorf("not implemented yet")
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction:")
+	}
+	
+	defer tx.Rollback(ctx)
+	
+	if _, err := r.db.Exec(ctx, `UPDATE staff_templates SET is_default = false WHERE staff_id = $1`, staffID); err != nil {
+		return fmt.Errorf("failed to set default template: %w", err)
+	}
+
+	if _, err := r.db.Exec(ctx, `UPDATE staff_templates SET is_default = true WHERE id = `, templateID); err != nil {
+		return fmt.Errorf("failed to set default template: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (r *scheduleRepository) GetShift(ctx context.Context, id string) (*domain.StaffShift, error) {
@@ -140,7 +167,44 @@ func (r *scheduleRepository) GetShift(ctx context.Context, id string) (*domain.S
 }
 
 func (r *scheduleRepository) GetShiftsByStaff(ctx context.Context, staffID string, startDate, endDate time.Time) ([]domain.StaffShift, error) {
-	return nil, fmt.Errorf("not implemented yet")
+	rows, err := r.db.Query(ctx,
+		`SELECT id, staff_id, shift_date, start_time, end_time, break_start_time, break_end_time, 
+		        is_available, is_manually_disabled, manual_disable_reason, shift_type, notes, 
+		        created_at, updated_at, created_by, updated_by
+		 FROM staff_shifts 
+		 WHERE staff_id = $1 AND shift_date >= $2 AND shift_date <= $3
+		 ORDER BY shift_date, start_time`,
+		staffID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var shifts []domain.StaffShift
+	for rows.Next() {
+		var shift domain.StaffShift
+		var createdBy, updatedBy *string
+
+		err := rows.Scan(&shift.ID, &shift.StaffID, &shift.ShiftDate, &shift.StartTime, &shift.EndTime,
+			&shift.BreakStartTime, &shift.BreakEndTime, &shift.IsAvailable, &shift.IsManuallyDisabled,
+			&shift.ManualDisableReason, &shift.ShiftType, &shift.Notes, &shift.CreatedAt, &shift.UpdatedAt,
+			&createdBy, &updatedBy)
+		if err != nil {
+			return nil, err
+		}
+
+		// Handle nullable fields
+		if createdBy != nil {
+			shift.CreatedBy = *createdBy
+		}
+		if updatedBy != nil {
+			shift.UpdatedBy = *updatedBy
+		}
+
+		shifts = append(shifts, shift)
+	}
+
+	return shifts, nil
 }
 
 func (r *scheduleRepository) GetShiftsByBusiness(ctx context.Context, businessID string, startDate, endDate time.Time) ([]domain.StaffShift, error) {

@@ -7,19 +7,14 @@ import (
 
 	"github.com/ialekseychuk/my-place/internal/domain"
 	"github.com/ialekseychuk/my-place/internal/dto"
-
 )
 
 type ScheduleService struct {
 	scheduleRepo domain.ScheduleRepository
-	staffRepo    interface {
-		GetById(ctx context.Context, id string) (*domain.Staff, error)
-	}
+	staffRepo    domain.StaffRepository
 }
 
-func NewScheduleService(scheduleRepo domain.ScheduleRepository, staffRepo interface {
-	GetById(ctx context.Context, id string) (*domain.Staff, error)
-}) *ScheduleService {
+func NewScheduleService(scheduleRepo domain.ScheduleRepository, staffRepo domain.StaffRepository) *ScheduleService {
 	return &ScheduleService{
 		scheduleRepo: scheduleRepo,
 		staffRepo:    staffRepo,
@@ -245,7 +240,7 @@ func (s *ScheduleService) GenerateSchedule(ctx context.Context, req dto.Generate
 func (s *ScheduleService) generateScheduleForStaff(ctx context.Context, staffID string, startDate, endDate time.Time, req dto.GenerateScheduleRequest) error {
 	// If using template, get the template
 	var template *domain.ScheduleTemplate
-	if req.UseTemplate && req.TemplateID != "" {
+	if req.TemplateID != "" {
 		var err error
 		template, err = s.scheduleRepo.GetScheduleTemplate(ctx, req.TemplateID)
 		if err != nil {
@@ -1039,13 +1034,17 @@ func (s *ScheduleService) convertDayScheduleTemplateToDTO(domain domain.DaySched
 func (s *ScheduleService) GetWeeklyScheduleView(ctx context.Context, businessID string, weekStartDate time.Time, staffIDs []string) (*dto.WeeklyScheduleViewResponse, error) {
 	weekEndDate := weekStartDate.AddDate(0, 0, 6)
 
-	// Get all staff if no specific IDs provided
+	// If no specific staff IDs provided, get all staff for the business
 	if len(staffIDs) == 0 {
-		return &dto.WeeklyScheduleViewResponse{
-			WeekStartDate:  weekStartDate.Format("2006-01-02"),
-			WeekEndDate:    weekEndDate.Format("2006-01-02"),
-			StaffSchedules: []dto.StaffWeeklyScheduleResponse{},
-		}, nil
+		allStaff, err := s.staffRepo.ListByBusinessId(ctx, businessID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get staff for business: %w", err)
+		}
+
+		// Extract staff IDs from all staff
+		for _, staff := range allStaff {
+			staffIDs = append(staffIDs, staff.ID)
+		}
 	}
 
 	var staffSchedules []dto.StaffWeeklyScheduleResponse

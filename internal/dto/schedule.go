@@ -80,7 +80,7 @@ type CreateShiftRequest struct {
 	BreakEndTime   string `json:"break_end_time" validate:"omitempty,len=5"`
 	ShiftType      string `json:"shift_type" validate:"oneof=regular overtime holiday emergency"`
 	Notes          string `json:"notes" validate:"omitempty,max=500"`
-	CreatedBy      string `json:"created_by" validate:"required,uuid4"`
+	CreatedBy      string `json:"created_by" validate:"required,len=32,hexadecimal"`
 }
 
 // UpdateShiftRequest для обновления смены
@@ -92,14 +92,14 @@ type UpdateShiftRequest struct {
 	ShiftType      string `json:"shift_type" validate:"omitempty,oneof=regular overtime holiday emergency"`
 	Notes          string `json:"notes" validate:"omitempty,max=500"`
 	IsAvailable    *bool  `json:"is_available" validate:"omitempty"`
-	UpdatedBy      string `json:"updated_by" validate:"required,uuid4"`
+	UpdatedBy      string `json:"updated_by" validate:"required,len=32,hexadecimal"`
 }
 
 // UpdateShiftAvailabilityRequest для обновления доступности смены
 type UpdateShiftAvailabilityRequest struct {
 	IsAvailable bool   `json:"is_available" validate:"required"`
 	Reason      string `json:"reason" validate:"omitempty,max=500"`
-	ActionBy    string `json:"action_by" validate:"required,uuid4"`
+	ActionBy    string `json:"action_by" validate:"required,len=32,hexadecimal"`
 }
 
 // ShiftResponse для возврата информации о смене
@@ -135,7 +135,7 @@ type GenerateScheduleRequest struct {
 	UseTemplate       bool     `json:"use_template"`
 	TemplateID        string   `json:"template_id" validate:"omitempty,uuid4"`
 	OverwriteExisting bool     `json:"overwrite_existing"`
-	GeneratedBy       string   `json:"generated_by" validate:"required,uuid4"`
+	GeneratedBy       string   `json:"generated_by" validate:"required,len=32,hexadecimal"`
 }
 
 // BulkShiftOperationRequest для массовых операций с сменами
@@ -143,7 +143,7 @@ type BulkShiftOperationRequest struct {
 	ShiftIDs  []string `json:"shift_ids" validate:"required,min=1,dive,uuid4"`
 	Operation string   `json:"operation" validate:"required,oneof=enable disable delete"`
 	Reason    string   `json:"reason" validate:"required,max=500"`
-	ActionBy  string   `json:"action_by" validate:"required,uuid4"`
+	ActionBy  string   `json:"action_by" validate:"required,len=32,hexadecimal"`
 }
 
 // =======================
@@ -159,13 +159,13 @@ type CreateTimeOffRequest struct {
 	Reason      string `json:"reason" validate:"required,max=500"`
 	IsHalfDay   bool   `json:"is_half_day"`
 	HalfDayType string `json:"half_day_type" validate:"omitempty,oneof=morning afternoon"`
-	RequestedBy string `json:"requested_by" validate:"required,uuid4"`
+	RequestedBy string `json:"requested_by" validate:"required,len=32,hexadecimal"`
 }
 
 // UpdateTimeOffRequest для обновления заявки на отпуск
 type UpdateTimeOffRequest struct {
 	Status     string `json:"status" validate:"omitempty,oneof=pending approved rejected cancelled"`
-	ApprovalBy string `json:"approval_by" validate:"omitempty,uuid4"`
+	ApprovalBy string `json:"approval_by" validate:"omitempty,len=32,hexadecimal"`
 	Comments   string `json:"comments" validate:"omitempty,max=500"`
 }
 
@@ -265,7 +265,7 @@ type QuickScheduleActionRequest struct {
 	StartTime string `json:"start_time" validate:"omitempty,len=5"`
 	EndTime   string `json:"end_time" validate:"omitempty,len=5"`
 	Reason    string `json:"reason" validate:"required,max=500"`
-	ActionBy  string `json:"action_by" validate:"required,uuid4"`
+	ActionBy  string `json:"action_by" validate:"required,len=32,hexadecimal"`
 }
 
 // CopyScheduleRequest для копирования расписания
@@ -275,7 +275,7 @@ type CopyScheduleRequest struct {
 	TargetStartDate   string   `json:"target_start_date" validate:"required,len=10"`
 	StaffIDs          []string `json:"staff_ids" validate:"required,min=1,dive,uuid4"`
 	OverwriteExisting bool     `json:"overwrite_existing"`
-	ActionBy          string   `json:"action_by" validate:"required,uuid4"`
+	ActionBy          string   `json:"action_by" validate:"required,len=32,hexadecimal"`
 }
 
 // BulkCreateShiftsRequest для массового создания смен
@@ -295,14 +295,14 @@ type BulkUpdateShiftsRequest struct {
 type BulkDeleteShiftsRequest struct {
 	ShiftIDs []string `json:"shift_ids" validate:"required,min=1,dive,uuid4"`
 	Reason   string   `json:"reason" validate:"required,max=500"`
-	ActionBy string   `json:"action_by" validate:"required,uuid4"`
+	ActionBy string   `json:"action_by" validate:"required,len=32,hexadecimal"`
 }
 
 // QuickStaffActionRequest для быстрых действий с сотрудником
 type QuickStaffActionRequest struct {
 	Date     string `json:"date" validate:"required,len=10"`
 	Reason   string `json:"reason" validate:"required,max=500"`
-	ActionBy string `json:"action_by" validate:"required,uuid4"`
+	ActionBy string `json:"action_by" validate:"required,len=32,hexadecimal"`
 }
 
 // StaffAvailabilityResponse для ответа о доступности сотрудника

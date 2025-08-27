@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	//"github.com/ialekseychuk/my-place/internal/domain"
 	"github.com/ialekseychuk/my-place/internal/dto"
-	//"github.com/ialekseychuk/my-place/internal/server/middleware"
+	"github.com/ialekseychuk/my-place/internal/server/middleware"
 	"github.com/ialekseychuk/my-place/internal/usecase"
 	"github.com/ialekseychuk/my-place/pkg/validate"
 )
@@ -199,6 +198,8 @@ func (h *ScheduleHandler) CreateShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.CreatedBy = middleware.GetUserFromContext(r.Context()).ID
+	
 	if errs := validate.Struct(req); errs != nil {
 		ValidationErrorsResponse(w, http.StatusUnprocessableEntity, errs)
 		return
@@ -348,15 +349,23 @@ func (h *ScheduleHandler) GenerateStaffSchedule(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	// Extract user from request context
+	user := middleware.GetUserFromContext(r.Context())
+	if user == nil {
+		ErrorResponse(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
 	var req dto.GenerateScheduleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		ErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-
 	// Override staff IDs to only include the current staff member
 	req.StaffIDs = []string{staffID}
+	// Set the GeneratedBy field with the current user's ID
+	req.GeneratedBy = user.ID
 
 	if errs := validate.Struct(req); errs != nil {
 		ValidationErrorsResponse(w, http.StatusUnprocessableEntity, errs)
