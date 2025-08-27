@@ -13,13 +13,19 @@ type BookingService struct {
 	bookingRepo domain.BookingRepository
 	serviceRepo domain.ServiceRepository
 	staffRepo   domain.StaffRepository
+	clientRepo  domain.ClientRepository
 }
 
-func NewBookingService(bookingRepo domain.BookingRepository, serviceRepo domain.ServiceRepository, staffRepo domain.StaffRepository) *BookingService {
+func NewBookingService(
+	bookingRepo domain.BookingRepository,
+	serviceRepo domain.ServiceRepository,
+	staffRepo domain.StaffRepository,
+	clientRepo domain.ClientRepository) *BookingService {
 	return &BookingService{
 		bookingRepo: bookingRepo,
 		serviceRepo: serviceRepo,
 		staffRepo:   staffRepo,
+		clientRepo:  clientRepo,
 	}
 }
 
@@ -42,6 +48,23 @@ func (s *BookingService) CreateBooking(ctx context.Context, businessID string, r
 		return fmt.Errorf("staff does not belong to this business")
 	}
 
+	// Look up client by phone number within the business
+	client, err := s.clientRepo.GetClientByPhone(ctx, businessID, req.CustomerPhone)
+	if err != nil {
+		// Client doesn't exist, create new client
+		client = &domain.Client{
+			BusinessID: businessID,
+			Phone:      req.CustomerPhone,
+			FirstName:  req.CustomerName,
+			Email:      req.CustomerEmail,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+		}
+		if err := s.clientRepo.CreateClient(ctx, client); err != nil {
+			return fmt.Errorf("failed to create client: %w", err)
+		}
+	}
+
 	// Calculate end time based on service duration
 	endAt := req.StartAt.Add(time.Duration(service.DurationMin) * time.Minute)
 
@@ -56,12 +79,11 @@ func (s *BookingService) CreateBooking(ctx context.Context, businessID string, r
 
 	// Create the booking
 	booking := &domain.Booking{
-		ServiceID:     req.ServiceID,
-		StaffID:       req.StaffID,
-		StartAt:       req.StartAt,
-		EndAt:         endAt,
-		CustomerName:  req.CustomerName,
-		CustomerEmail: req.CustomerEmail,
+		ServiceID: req.ServiceID,
+		StaffID:   req.StaffID,
+		ClientID:  client.ID,
+		StartAt:   req.StartAt,
+		EndAt:     endAt,
 	}
 
 	return s.bookingRepo.Create(ctx, booking)
@@ -105,6 +127,15 @@ func (s *BookingService) GetBookingsByBusiness(ctx context.Context, businessID s
 			return nil, fmt.Errorf("failed to get staff: %w", err)
 		}
 
+		// Get client name
+		var clientName string
+		if booking.ClientID != "" {
+			client, err := s.clientRepo.GetClientByID(ctx, booking.ClientID)
+			if err == nil {
+				clientName = fmt.Sprintf("%s %s", client.FirstName, client.LastName)
+			}
+		}
+
 		bookingResponses = append(bookingResponses, &dto.BookingResponse{
 			ID:            booking.ID,
 			ServiceID:     booking.ServiceID,
@@ -113,8 +144,7 @@ func (s *BookingService) GetBookingsByBusiness(ctx context.Context, businessID s
 			StaffName:     fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
 			StartAt:       booking.StartAt,
 			EndAt:         booking.EndAt,
-			CustomerName:  booking.CustomerName,
-			CustomerEmail: booking.CustomerEmail,
+			CustomerName:  clientName,
 			CreatedAt:     booking.CreatedAt,
 			UpdatedAt:     booking.UpdatedAt,
 		})

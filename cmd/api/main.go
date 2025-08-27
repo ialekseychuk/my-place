@@ -46,6 +46,7 @@ func main() {
 	bookingRepo := repository.NewBookingRepository(db)
 	staffServiceRepo := repository.NewStaffServiceRepository(db)
 	scheduleRepo := repository.NewScheduleRepository(db)
+	clientRepo := repository.NewClientRepository(db) // Add client repository
 
 	// usecases
 	ucBusines := usecase.NewBusinessUseCase(businesRepo, userRepo, workingHoursRepo)
@@ -53,7 +54,7 @@ func main() {
 
 	ucService := usecase.NewServiceUseCase(serviceRepo)
 	ucStaff := usecase.NewStaffUseCase(staffRepo, staffServiceRepo, serviceRepo)
-	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo)
+	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo, clientRepo) // Update booking service
 	scheduleService := usecase.NewScheduleService(scheduleRepo, staffRepo)
 
 	//handlers

@@ -3,13 +3,12 @@ package domain
 import "time"
 
 type Booking struct {
-	ID            string
-	ServiceID     string
-	StaffID       string
-	StartAt       time.Time
-	EndAt         time.Time
-	CustomerName  string
-	CustomerEmail string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID        string    `json:"id"`
+	ServiceID string    `json:"service_id"`
+	StaffID   string    `json:"staff_id"`
+	ClientID  string    `json:"client_id"`
+	StartAt   time.Time `json:"start_at"`
+	EndAt     time.Time `json:"end_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

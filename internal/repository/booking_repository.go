@@ -23,10 +23,10 @@ func (r *bookingRepository) Create(ctx context.Context, booking *domain.Booking)
 	booking.UpdatedAt = time.Now()
 
 	err := r.db.QueryRow(ctx,
-		`INSERT INTO bookings (service_id, staff_id, customer_name, customer_email, start_at, end_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO bookings (service_id, staff_id, client_id, start_at, end_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		booking.ServiceID, booking.StaffID, booking.CustomerName, booking.CustomerEmail,
+		booking.ServiceID, booking.StaffID, booking.ClientID,
 		booking.StartAt, booking.EndAt, booking.CreatedAt, booking.UpdatedAt).Scan(&booking.ID)
 	return err
 }
@@ -34,11 +34,11 @@ func (r *bookingRepository) Create(ctx context.Context, booking *domain.Booking)
 func (r *bookingRepository) GetById(ctx context.Context, id string) (*domain.Booking, error) {
 	var booking domain.Booking
 	err := r.db.QueryRow(ctx,
-		`SELECT id, service_id, staff_id, customer_name, customer_email, start_at, end_at, created_at, updated_at
+		`SELECT id, service_id, staff_id, client_id, start_at, end_at, created_at, updated_at
 		 FROM bookings
 		 WHERE id = $1`,
-		id).Scan(&booking.ID, &booking.ServiceID, &booking.StaffID, &booking.CustomerName,
-		&booking.CustomerEmail, &booking.StartAt, &booking.EndAt, &booking.CreatedAt, &booking.UpdatedAt)
+		id).Scan(&booking.ID, &booking.ServiceID, &booking.StaffID, &booking.ClientID,
+		&booking.StartAt, &booking.EndAt, &booking.CreatedAt, &booking.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +50,7 @@ func (r *bookingRepository) GetByBusinessID(ctx context.Context, businessID stri
 	var args []interface{}
 
 	baseQuery := `
-		SELECT b.id, b.service_id, b.staff_id, b.customer_name, b.customer_email, 
-		       b.start_at, b.end_at, b.created_at, b.updated_at
+		SELECT b.id, b.service_id, b.staff_id, b.client_id, b.start_at, b.end_at, b.created_at, b.updated_at
 		FROM bookings b
 		JOIN services s ON b.service_id = s.id
 		WHERE s.business_id = $1
@@ -81,8 +80,8 @@ func (r *bookingRepository) GetByBusinessID(ctx context.Context, businessID stri
 	var bookings []*domain.Booking
 	for rows.Next() {
 		var booking domain.Booking
-		err := rows.Scan(&booking.ID, &booking.ServiceID, &booking.StaffID, &booking.CustomerName,
-			&booking.CustomerEmail, &booking.StartAt, &booking.EndAt, &booking.CreatedAt, &booking.UpdatedAt)
+		err := rows.Scan(&booking.ID, &booking.ServiceID, &booking.StaffID, &booking.ClientID,
+			&booking.StartAt, &booking.EndAt, &booking.CreatedAt, &booking.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +93,7 @@ func (r *bookingRepository) GetByBusinessID(ctx context.Context, businessID stri
 
 func (r *bookingRepository) GetByStaffAndTimeRange(ctx context.Context, staffID string, start, end time.Time) ([]*domain.Booking, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, service_id, staff_id, customer_name, customer_email, start_at, end_at, created_at, updated_at
+		`SELECT id, service_id, staff_id, client_id, start_at, end_at, created_at, updated_at
 		 FROM bookings
 		 WHERE staff_id = $1 AND start_at < $3 AND end_at > $2
 		 ORDER BY start_at`,
@@ -107,8 +106,8 @@ func (r *bookingRepository) GetByStaffAndTimeRange(ctx context.Context, staffID 
 	var bookings []*domain.Booking
 	for rows.Next() {
 		var booking domain.Booking
-		err := rows.Scan(&booking.ID, &booking.ServiceID, &booking.StaffID, &booking.CustomerName,
-			&booking.CustomerEmail, &booking.StartAt, &booking.EndAt, &booking.CreatedAt, &booking.UpdatedAt)
+		err := rows.Scan(&booking.ID, &booking.ServiceID, &booking.StaffID, &booking.ClientID,
+			&booking.StartAt, &booking.EndAt, &booking.CreatedAt, &booking.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
