@@ -14,6 +14,7 @@ import { ServicesPage } from '@/pages/ServicesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { StaffPage } from '@/pages/StaffPage'
 import { StaffServicePage } from '@/pages/StaffServicePage'
+import { ClientsPage } from '@/pages/ClientsPage'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 
@@ -52,6 +53,7 @@ function App() {
                   <Route path="services" element={<ServicesPage />} />
                   <Route path="schedule" element={<SchedulePage />} />
                   <Route path="bookings" element={<BookingsPage />} />
+                  <Route path="clients" element={<ClientsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                 </Route>
               </Routes>

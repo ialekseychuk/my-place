@@ -1,10 +1,12 @@
 import { AddStaffForm } from '@/components/AddStaffForm'
+import { EditStaffForm } from '@/components/EditStaffForm'
 import { StaffList } from '@/components/StaffList'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { staffService } from '@/services/staff'
-import type { CreateStaffRequest, Staff } from '@/types/staff'
+import type { CreateStaffRequest, Staff, UpdateStaffRequest } from '@/types/staff'
 import { Plus, Settings, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -15,7 +17,9 @@ export function StaffPage() {
   const [staff, setStaff] = useState<Staff[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [updating, setUpdating] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const loadStaff = async () => {
@@ -57,8 +61,25 @@ export function StaffPage() {
   }
 
   const handleEditStaff = (staff: Staff) => {
-    // TODO: Implement edit functionality
-    console.log('Edit staff:', staff)
+    setEditingStaff(staff)
+  }
+
+  const handleUpdateStaff = async (staffData: UpdateStaffRequest) => {
+    if (!user?.business_id || !editingStaff) return
+
+    try {
+      setUpdating(true)
+      const updatedStaff = await staffService.updateStaff(user.business_id, editingStaff.id, staffData)
+      setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s))
+      setEditingStaff(null)
+      setError(null)
+    } catch (err) {
+      setError('Ошибка при обновлении сотрудника')
+      console.error('Error updating staff:', err)
+      throw err
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const handleDeleteStaff = async (staffId: string) => {
@@ -139,6 +160,19 @@ export function StaffPage() {
           />
         </CardContent>
       </Card>
+
+      <Dialog open={!!editingStaff} onOpenChange={(open) => !open && setEditingStaff(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {editingStaff && (
+            <EditStaffForm
+              staff={editingStaff}
+              onSubmit={handleUpdateStaff}
+              loading={updating}
+              onCancel={() => setEditingStaff(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

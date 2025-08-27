@@ -56,6 +56,7 @@ func main() {
 	ucStaff := usecase.NewStaffUseCase(staffRepo, staffServiceRepo, serviceRepo)
 	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo, clientRepo) // Update booking service
 	scheduleService := usecase.NewScheduleService(scheduleRepo, staffRepo)
+	clientService := usecase.NewClientService(clientRepo) // Add client service
 
 	//handlers
 
@@ -67,6 +68,7 @@ func main() {
 	stsh := handlers.NewStaffServiceHandler(ucStaff)
 	bkh := handlers.NewBookingHandler(ucBooking)
 	scheduleHandler := handlers.NewScheduleHandler(scheduleService)
+	clientHandler := handlers.NewClientHandler(clientService) // Add client handler
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger(logger))
@@ -109,6 +111,7 @@ func main() {
 						owner.Mount("/staffs", sth.Routes())
 						owner.Mount("/staff-services", stsh.Routes())
 						owner.Mount("/schedule", scheduleHandler.Routes())
+						owner.Mount("/clients", clientHandler.Routes())
 					})
 
 					// Staff accessible routes

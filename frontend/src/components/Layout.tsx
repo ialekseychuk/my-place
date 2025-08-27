@@ -10,7 +10,8 @@ import {
   Package,
   Settings,
   Users,
-  X
+  X,
+  User
 } from 'lucide-react'
 import React from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Услуги', href: '/services', icon: Package },
   { name: 'Расписание', href: '/schedule', icon: Calendar },
   { name: 'Бронирования', href: '/bookings', icon: Calendar },
+  { name: 'Клиенты', href: '/clients', icon: User },
   { name: 'Настройки', href: '/settings', icon: Settings },
 ]
 

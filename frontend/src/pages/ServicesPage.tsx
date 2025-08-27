@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Plus, Package } from 'lucide-react'
 import { AddServiceForm } from '@/components/AddServiceForm'
+import { EditServiceForm } from '@/components/EditServiceForm'
 import { ServiceList } from '@/components/ServiceList'
 import { serviceService } from '@/services/service'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Service, CreateServiceRequest } from '@/types/service'
+import type { Service, CreateServiceRequest, UpdateServiceRequest } from '@/types/service'
 
 export function ServicesPage() {
   const { user } = useAuth()
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [updating, setUpdating] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingService, setEditingService] = useState<Service | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const loadServices = async () => {
@@ -55,8 +59,25 @@ export function ServicesPage() {
   }
 
   const handleEditService = (service: Service) => {
-    // TODO: Implement edit functionality
-    console.log('Edit service:', service)
+    setEditingService(service)
+  }
+
+  const handleUpdateService = async (serviceData: UpdateServiceRequest) => {
+    if (!user?.business_id || !editingService) return
+
+    try {
+      setUpdating(true)
+      const updatedService = await serviceService.updateService(user.business_id, editingService.id, serviceData)
+      setServices(prev => prev.map(s => s.id === updatedService.id ? updatedService : s))
+      setEditingService(null)
+      setError(null)
+    } catch (err) {
+      setError('Ошибка при обновлении услуги')
+      console.error('Error updating service:', err)
+      throw err
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const handleDeleteService = async (serviceId: string) => {
@@ -127,6 +148,19 @@ export function ServicesPage() {
           />
         </CardContent>
       </Card>
+
+      <Dialog open={!!editingService} onOpenChange={(open) => !open && setEditingService(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {editingService && (
+            <EditServiceForm
+              service={editingService}
+              onSubmit={handleUpdateService}
+              loading={updating}
+              onCancel={() => setEditingService(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
