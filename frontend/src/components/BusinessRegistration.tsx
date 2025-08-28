@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { PhoneInput } from '@/components/ui/phone-input'
 import React, { useState } from 'react'
 //import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -422,10 +423,10 @@ function BusinessInfoStep({ data, updateData }: {
 
       <div>
         <Label htmlFor="phone">Телефон *</Label>
-        <Input
+        <PhoneInput
           id="phone"
           value={data.phone}
-          onChange={(e) => updateData('phone', e.target.value)}
+          onChange={(value) => updateData('phone', value)}
           placeholder="+7 (999) 123-45-67"
         />
       </div>
@@ -493,10 +494,10 @@ function OwnerInfoStep({ data, updateData }: {
 
       <div>
         <Label htmlFor="ownerPhone">Телефон</Label>
-        <Input
+        <PhoneInput
           id="ownerPhone"
           value={data.ownerPhone}
-          onChange={(e) => updateData('ownerPhone', e.target.value)}
+          onChange={(value) => updateData('ownerPhone', value)}
           placeholder="+7 (999) 123-45-67"
         />
       </div>

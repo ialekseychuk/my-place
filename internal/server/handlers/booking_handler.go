@@ -36,7 +36,7 @@ func (h *BookingHandler) Routes() chi.Router {
 // @Produce json
 // @Param businessID path string true "Business ID"
 // @Param booking body dto.CreateBookingRequest true "Booking object"
-// @Success 201
+// @Success 201 {object} dto.BookingResponse
 // @Failure 400 {object} dto.ErrorResponse "Bad request"
 // @Failure 401 {object} dto.ErrorResponse "Unauthorized"
 // @Failure 403 {object} dto.ErrorResponse "Forbidden"

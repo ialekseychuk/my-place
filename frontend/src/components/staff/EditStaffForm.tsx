@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Save } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { useLocation } from '@/contexts/LocationContext'
 import type { Staff, UpdateStaffRequest } from '@/types/staff'
+import { Loader2, Save } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 
 interface EditStaffFormProps {
   staff: Staff
@@ -16,6 +18,7 @@ interface EditStaffFormProps {
 }
 
 export function EditStaffForm({ staff, onSubmit, loading = false, onCancel }: EditStaffFormProps) {
+  const { locations } = useLocation()
   const [formData, setFormData] = useState<UpdateStaffRequest>({
     first_name: staff.first_name,
     last_name: staff.last_name,
@@ -25,6 +28,7 @@ export function EditStaffForm({ staff, onSubmit, loading = false, onCancel }: Ed
     description: staff.description,
     specialization: staff.specialization,
     is_active: staff.is_active,
+    location_id: staff.location_id
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -39,6 +43,7 @@ export function EditStaffForm({ staff, onSubmit, loading = false, onCancel }: Ed
       description: staff.description,
       specialization: staff.specialization,
       is_active: staff.is_active,
+      location_id: staff.location_id
     })
   }, [staff])
 
@@ -67,9 +72,7 @@ export function EditStaffForm({ staff, onSubmit, loading = false, onCancel }: Ed
       newErrors.position = 'Должность должна содержать минимум 2 символа'
     }
 
-    if (formData.phone && (formData.phone.length < 10 || formData.phone.length > 20)) {
-      newErrors.phone = 'Телефон должен содержать от 10 до 20 символов'
-    }
+    // Phone validation is handled by the PhoneInput component
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -163,10 +166,10 @@ export function EditStaffForm({ staff, onSubmit, loading = false, onCancel }: Ed
 
             <div className="space-y-2">
               <Label htmlFor="phone">Телефон</Label>
-              <Input
+              <PhoneInput
                 id="phone"
                 value={formData.phone || ''}
-                onChange={handleInputChange('phone')}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
                 placeholder="+7 (999) 123-45-67"
                 disabled={loading}
               />
@@ -207,6 +210,28 @@ export function EditStaffForm({ staff, onSubmit, loading = false, onCancel }: Ed
               />
             </div>
           </div>
+
+          {locations.length > 0 && (
+            <div className="space-y-2">
+              <Label>Локация</Label>
+              <Select 
+                value={formData.location_id || ''} 
+                onValueChange={handleSelectChange('location_id')} 
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите локацию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map(location => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">Описание</Label>

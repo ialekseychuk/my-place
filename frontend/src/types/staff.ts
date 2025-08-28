@@ -1,6 +1,7 @@
 export interface Staff {
   id: string
   business_id: string
+  location_id?: string
   first_name: string
   last_name: string
   full_name: string
@@ -22,6 +23,7 @@ export interface CreateStaffRequest {
   position: string
   description?: string
   specialization?: string
+  location_id?: string
 }
 
 export interface UpdateStaffRequest {
@@ -33,4 +35,5 @@ export interface UpdateStaffRequest {
   description?: string
   specialization?: string
   is_active?: boolean
+  location_id?: string
 }

@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/contexts/AuthContext'
-import { serviceService } from '@/services/service'
-import { staffService } from '@/services/staff'
+import { useStaffData } from '@/contexts/StaffDataContext'
+import { useServiceData } from '@/contexts/ServiceDataContext'
 import { staffServiceService } from '@/services/staff-service'
 import type { Service } from '@/types/service'
 import type { Staff } from '@/types/staff'
@@ -14,8 +14,8 @@ import { useEffect, useState } from 'react'
 
 export function StaffServiceAssignment() {
   const { user } = useAuth()
-  const [staff, setStaff] = useState<Staff[]>([])
-  const [services, setServices] = useState<Service[]>([])
+  const { staff, loading: staffLoading } = useStaffData()
+  const { services, loading: servicesLoading } = useServiceData()
   const [staffServices, setStaffServices] = useState<Record<string, string[]>>({}) // staffId -> serviceIds[]
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -29,25 +29,19 @@ export function StaffServiceAssignment() {
       setLoading(true)
       setError(null)
 
-      const [staffData, servicesData] = await Promise.all([
-        staffService.getStaffByBusiness(user.business_id),
-        serviceService.getServicesByBusiness(user.business_id)
-      ])
+      const assignmentsData = await staffServiceService.getAllStaffServices(user.business_id)
 
-      setStaff(staffData)
-      setServices(servicesData)
-
-      // Load current staff-service assignments
+      // Convert assignments array to record format
       const assignments: Record<string, string[]> = {}
-      for (const member of staffData) {
-        try {
-          const memberServices = await staffServiceService.getStaffServices(user.business_id, member.id)
-          assignments[member.id] = memberServices.map(s => s.id)
-        } catch (err) {
-          console.error(`Failed to load services for staff ${member.id}:`, err)
-          assignments[member.id] = []
+      // Ensure assignmentsData is an array before calling forEach
+      const safeAssignmentsData = Array.isArray(assignmentsData) ? assignmentsData : []
+      safeAssignmentsData.forEach(assignment => {
+        if (!assignments[assignment.staff_id]) {
+          assignments[assignment.staff_id] = []
         }
-      }
+        assignments[assignment.staff_id].push(assignment.service_id)
+      })
+      
       setStaffServices(assignments)
     } catch (err) {
       setError('Ошибка при загрузке данных')
@@ -112,7 +106,8 @@ export function StaffServiceAssignment() {
     ).length
   }
 
-  if (loading) {
+  // Show loading state if either staff or services are loading
+  if (staffLoading || servicesLoading || loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -137,7 +132,11 @@ export function StaffServiceAssignment() {
     )
   }
 
-  if (staff.length === 0 || services.length === 0) {
+  // Ensure staff and services are arrays before checking their length
+  const safeStaff = Array.isArray(staff) ? staff : []
+  const safeServices = Array.isArray(services) ? services : []
+
+  if (safeStaff.length === 0 || safeServices.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -154,8 +153,8 @@ export function StaffServiceAssignment() {
             <Settings className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Нет данных для настройки</h3>
             <p className="text-muted-foreground text-center">
-              {staff.length === 0 && "Добавьте сотрудников чтобы настроить привязку услуг"}
-              {services.length === 0 && "Добавьте услуги чтобы настроить привязку к мастерам"}
+              {safeStaff.length === 0 && "Добавьте сотрудников чтобы настроить привязку услуг"}
+              {safeServices.length === 0 && "Добавьте услуги чтобы настроить привязку к мастерам"}
             </p>
           </CardContent>
         </Card>
@@ -208,14 +207,14 @@ export function StaffServiceAssignment() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Мастера ({staff.length})
+              Мастера ({safeStaff.length})
             </CardTitle>
             <CardDescription>
               Выберите услуги для каждого мастера
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {staff.map((member) => (
+            {safeStaff.map((member) => (
               <div key={member.id} className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -228,7 +227,7 @@ export function StaffServiceAssignment() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-2">
-                  {services.map((service) => (
+                  {safeServices.map((service) => (
                     <label
                       key={`${member.id}-${service.id}`}
                       className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
@@ -249,7 +248,7 @@ export function StaffServiceAssignment() {
                   ))}
                 </div>
 
-                {member.id !== staff[staff.length - 1].id && (
+                {member.id !== safeStaff[safeStaff.length - 1]?.id && (
                   <Separator className="my-4" />
                 )}
               </div>
@@ -262,14 +261,14 @@ export function StaffServiceAssignment() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Услуги ({services.length})
+              Услуги ({safeServices.length})
             </CardTitle>
             <CardDescription>
               Показано, какие мастера могут выполнять каждую услугу
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {services.map((service) => (
+            {safeServices.map((service) => (
               <div key={service.id} className="space-y-3 p-4 border rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
@@ -284,7 +283,7 @@ export function StaffServiceAssignment() {
                 </div>
 
                 <div className="flex flex-wrap gap-1">
-                  {staff
+                  {safeStaff
                     .filter(member => staffServices[member.id]?.includes(service.id))
                     .map(member => (
                       <Badge key={member.id} variant="secondary" className="text-xs">

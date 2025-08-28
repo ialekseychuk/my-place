@@ -1,5 +1,5 @@
 import { DatePickerDialog } from '@/components/DatePickerDialog'
-import { ScheduleView } from '@/components/ScheduleView'
+import { ScheduleView } from '@/components/shedule/ScheduleView'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

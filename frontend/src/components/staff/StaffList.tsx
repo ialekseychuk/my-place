@@ -1,18 +1,22 @@
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Users, Phone, MapPin, Edit, Trash2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useLocation } from '@/contexts/LocationContext'
 import type { Staff } from '@/types/staff'
+import { Edit, MapPin, Phone, Trash2, Users } from 'lucide-react'
 
 interface StaffListProps {
-  staff: Staff[]
+  staff: Staff[] | null
   loading?: boolean
   onEdit?: (staff: Staff) => void
   onDelete?: (staffId: string) => void
 }
 
 export function StaffList({ staff, loading = false, onEdit, onDelete }: StaffListProps) {
+  const { locations } = useLocation()
+  // Create a safe array to prevent null reference errors
+  const safeStaff = Array.isArray(staff) ? staff : [];
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -31,7 +35,7 @@ export function StaffList({ staff, loading = false, onEdit, onDelete }: StaffLis
     )
   }
 
-  if (staff.length === 0) {
+  if (safeStaff.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
@@ -55,9 +59,15 @@ export function StaffList({ staff, loading = false, onEdit, onDelete }: StaffLis
     }
   }
 
+  const getLocationName = (locationId?: string): string => {
+    if (!locationId) return 'Не указана'
+    const location = locations.find(loc => loc.id === locationId)
+    return location ? location.name : 'Не найдена'
+  }
+
   return (
     <div className="space-y-4">
-      {staff.map((member) => (
+      {safeStaff.map((member) => (
         <Card key={member.id} className="transition-shadow hover:shadow-md">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
@@ -103,6 +113,13 @@ export function StaffList({ staff, loading = false, onEdit, onDelete }: StaffLis
                 <div className="flex items-center gap-2 text-sm">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span>{getGenderLabel(member.gender)}</span>
+                </div>
+              )}
+
+              {member.location_id && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span>{getLocationName(member.location_id)}</span>
                 </div>
               )}
 

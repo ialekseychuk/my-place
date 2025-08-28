@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Save } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useLocation } from '@/contexts/LocationContext'
 import type { Service, UpdateServiceRequest } from '@/types/service'
+import { Loader2, Save } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+
+// Extended type for form state to include price input value
+interface FormState extends UpdateServiceRequest {
+  priceInputValue?: string
+}
 
 interface EditServiceFormProps {
   service: Service
@@ -14,10 +21,14 @@ interface EditServiceFormProps {
 }
 
 export function EditServiceForm({ service, onSubmit, loading = false, onCancel }: EditServiceFormProps) {
-  const [formData, setFormData] = useState<UpdateServiceRequest>({
+  const { locations } = useLocation()
+  const [formData, setFormData] = useState<FormState>({
     name: service.name,
     duration_min: service.duration_min,
     price_cents: service.price_cents,
+    location_id: service.location_id,
+    category_id: service.category_id,
+    priceInputValue: (service.price_cents / 100).toFixed(2)
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -27,13 +38,11 @@ export function EditServiceForm({ service, onSubmit, loading = false, onCancel }
       name: service.name,
       duration_min: service.duration_min,
       price_cents: service.price_cents,
+      location_id: service.location_id,
+      category_id: service.category_id,
+      priceInputValue: (service.price_cents / 100).toFixed(2)
     })
   }, [service])
-
-  // Helper functions for price formatting
-  const formatPrice = (cents: number): string => {
-    return (cents / 100).toFixed(2)
-  }
 
   const parsePrice = (value: string): number => {
     const parsed = parseFloat(value)
@@ -44,6 +53,9 @@ export function EditServiceForm({ service, onSubmit, loading = false, onCancel }
     e.preventDefault()
     setErrors({})
 
+    // Parse the price from the input value
+    const priceCents = parsePrice(formData.priceInputValue || '0')
+    
     // Basic validation
     const newErrors: Record<string, string> = {}
     
@@ -57,7 +69,7 @@ export function EditServiceForm({ service, onSubmit, loading = false, onCancel }
       newErrors.duration_min = 'Продолжительность должна быть больше 0'
     }
 
-    if (formData.price_cents !== undefined && formData.price_cents <= 0) {
+    if (priceCents <= 0) {
       newErrors.price_cents = 'Цена должна быть больше 0'
     }
 
@@ -67,13 +79,19 @@ export function EditServiceForm({ service, onSubmit, loading = false, onCancel }
     }
 
     try {
-      await onSubmit(formData)
+      await onSubmit({
+        name: formData.name,
+        duration_min: formData.duration_min,
+        price_cents: priceCents,
+        location_id: formData.location_id,
+        category_id: formData.category_id
+      })
     } catch (error) {
       console.error('Error updating service:', error)
     }
   }
 
-  const handleInputChange = (field: keyof UpdateServiceRequest) => (
+  const handleInputChange = (field: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = e.target.value
@@ -89,18 +107,25 @@ export function EditServiceForm({ service, onSubmit, loading = false, onCancel }
         ...prev,
         [field]: isNaN(numValue) ? 0 : numValue
       }))
-    } else if (field === 'price_cents') {
-      const priceInCents = parsePrice(value)
+    } else if (field === 'priceInputValue') {
+      // For price input, we store the raw value as string
       setFormData(prev => ({
         ...prev,
-        [field]: priceInCents
+        [field]: value
       }))
     }
 
     // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
+    if (errors[field as keyof UpdateServiceRequest]) {
+      setErrors(prev => ({ ...prev, [field as keyof UpdateServiceRequest]: '' }))
     }
+  }
+
+  const handleSelectChange = (field: keyof FormState, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value || undefined
+    }))
   }
 
   return (
@@ -154,8 +179,8 @@ export function EditServiceForm({ service, onSubmit, loading = false, onCancel }
                 type="number"
                 min="0.01"
                 step="0.01"
-                value={formData.price_cents !== undefined ? formatPrice(formData.price_cents) : ''}
-                onChange={handleInputChange('price_cents')}
+                value={formData.priceInputValue || ''}
+                onChange={handleInputChange('priceInputValue')}
                 placeholder="1500.00"
                 disabled={loading}
               />
@@ -164,6 +189,28 @@ export function EditServiceForm({ service, onSubmit, loading = false, onCancel }
               )}
             </div>
           </div>
+
+          {locations.length > 0 && (
+            <div className="space-y-2">
+              <Label>Локация</Label>
+              <Select 
+                value={formData.location_id || ''} 
+                onValueChange={(value) => handleSelectChange('location_id', value)} 
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите локацию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map(location => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="text-sm text-muted-foreground">
             <p>* - обязательные поля</p>

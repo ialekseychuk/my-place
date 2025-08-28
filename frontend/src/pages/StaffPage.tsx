@@ -1,46 +1,25 @@
-import { AddStaffForm } from '@/components/AddStaffForm'
-import { EditStaffForm } from '@/components/EditStaffForm'
-import { StaffList } from '@/components/StaffList'
+import { AddStaffForm } from '@/components/staff/AddStaffForm'
+import { EditStaffForm } from '@/components/staff/EditStaffForm'
+import { StaffList } from '@/components/staff/StaffList'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useAuth } from '@/contexts/AuthContext'
+import { useStaffData } from '@/contexts/StaffDataContext'
 import { staffService } from '@/services/staff'
 import type { CreateStaffRequest, Staff, UpdateStaffRequest } from '@/types/staff'
 import { Plus, Settings, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export function StaffPage() {
   const { user } = useAuth()
+  const { staff, loading, error, refreshStaff } = useStaffData()
   const navigate = useNavigate()
-  const [staff, setStaff] = useState<Staff[]>([])
-  const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const loadStaff = async () => {
-    if (!user?.business_id) return
-
-    try {
-      setLoading(true)
-      const staffData = await staffService.getStaffByBusiness(user.business_id)
-      setStaff(staffData)
-      setError(null)
-    } catch (err) {
-      setError('Ошибка при загрузке списка сотрудников')
-      console.error('Error loading staff:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadStaff()
-  }, [user?.business_id])
 
   const handleCreateStaff = async (staffData: CreateStaffRequest) => {
     if (!user?.business_id) return
@@ -48,11 +27,10 @@ export function StaffPage() {
     try {
       setCreating(true)
       const newStaff = await staffService.createStaff(user.business_id, staffData)
-      setStaff(prev => [newStaff, ...prev])
+      // Update the shared context
+      await refreshStaff()
       setShowAddForm(false)
-      setError(null)
     } catch (err) {
-      setError('Ошибка при создании сотрудника')
       console.error('Error creating staff:', err)
       throw err // Re-throw to prevent form reset
     } finally {
@@ -70,11 +48,10 @@ export function StaffPage() {
     try {
       setUpdating(true)
       const updatedStaff = await staffService.updateStaff(user.business_id, editingStaff.id, staffData)
-      setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s))
+      // Update the shared context
+      await refreshStaff()
       setEditingStaff(null)
-      setError(null)
     } catch (err) {
-      setError('Ошибка при обновлении сотрудника')
       console.error('Error updating staff:', err)
       throw err
     } finally {
@@ -100,7 +77,7 @@ export function StaffPage() {
           <Button 
             variant="outline"
             onClick={() => navigate('/staff-services')}
-            disabled={staff.length === 0}
+            disabled={!staff || staff.length === 0}
           >
             <Settings className="mr-2 h-4 w-4" />
             Привязка услуг
@@ -145,7 +122,7 @@ export function StaffPage() {
             Список сотрудников
           </CardTitle>
           <CardDescription>
-            {staff.length > 0
+            {staff && staff.length > 0
               ? `Всего сотрудников: ${staff.length}`
               : 'Здесь будет отображаться список всех сотрудников'
             }

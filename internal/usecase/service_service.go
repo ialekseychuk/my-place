@@ -10,7 +10,6 @@ type ServiceService struct {
 	repo domain.ServiceRepository
 }
 
-
 func NewServiceUseCase(repo domain.ServiceRepository) *ServiceService {
 	return &ServiceService{
 		repo: repo,
@@ -25,3 +24,14 @@ func (s *ServiceService) ListByBusinessId(ctx context.Context, businessId string
 	return s.repo.ListByBusinessId(ctx, businessId)
 }
 
+func (s *ServiceService) GetServiceById(ctx context.Context, id string) (*domain.Service, error) {
+	return s.repo.GetById(ctx, id)
+}
+
+func (s *ServiceService) UpdateService(ctx context.Context, service *domain.Service) error {
+	return s.repo.Update(ctx, service)
+}
+
+func (s *ServiceService) DeleteService(ctx context.Context, id string) error {
+	return s.repo.Delete(ctx, id)
+}

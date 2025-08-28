@@ -10,6 +10,7 @@ type CreateStaffRequest struct {
 	Position       string `json:"position" validate:"required,min=2,max=100"`
 	Description    string `json:"description" validate:"omitempty,max=500"`
 	Specialization string `json:"specialization" validate:"omitempty,max=100"`
+	LocationID     string `json:"location_id" validate:"omitempty,uuid4"`
 }
 
 type UpdateStaffRequest struct {
@@ -21,11 +22,13 @@ type UpdateStaffRequest struct {
 	Description    string `json:"description" validate:"omitempty,max=500"`
 	Specialization string `json:"specialization" validate:"omitempty,max=100"`
 	IsActive       *bool  `json:"is_active" validate:"omitempty"`
+	LocationID     string `json:"location_id" validate:"omitempty,uuid4"`
 }
 
 type StaffResponse struct {
 	ID             string    `json:"id"`
 	BusinessID     string    `json:"business_id"`
+	LocationID     string    `json:"location_id"`
 	FirstName      string    `json:"first_name"`
 	LastName       string    `json:"last_name"`
 	FullName       string    `json:"full_name"` // computed field: FirstName + LastName

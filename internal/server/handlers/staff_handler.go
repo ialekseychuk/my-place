@@ -37,7 +37,7 @@ func (h *StaffHandler) Routes() chi.Router {
 // @Produce json
 // @Param staff body dto.CreateStaffRequest true "Staff object"
 // @Param businessID path string true "Business ID"
-// @Success 201
+// @Success 201 {object} dto.StaffResponse
 // @Failure 422 {object} map[string]string "Validation errors"
 // @Failure 401 {object} dto.ErrorResponse "Unauthorized"
 // @Failure 403 {object} dto.ErrorResponse "Forbidden"
@@ -51,7 +51,7 @@ func (h *StaffHandler) createStaff(w http.ResponseWriter, r *http.Request) {
 		ErrorResponse(w, http.StatusBadRequest, "unprocessable entity")
 		return
 	}
-
+	req.LocationID = "6c1934d6-5074-4ca8-8494-eb986be440c9"
 	errs := validate.Struct(req)
 	if errs != nil {
 		ValidationErrorsResponse(w, http.StatusUnprocessableEntity, errs)
@@ -60,6 +60,7 @@ func (h *StaffHandler) createStaff(w http.ResponseWriter, r *http.Request) {
 
 	staff := &domain.Staff{
 		BusinessID:     businessId,
+		LocationID:     req.LocationID,
 		FirstName:      req.FirstName,
 		LastName:       req.LastName,
 		Phone:          req.Phone,
@@ -76,10 +77,12 @@ func (h *StaffHandler) createStaff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Возвращаем созданный объект
 	response := h.convertToStaffResponse(staff)
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 // @Summary get staffs
@@ -88,8 +91,8 @@ func (h *StaffHandler) createStaff(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param businessID path string true "Business ID"
-// @Success 200
-// @Failure 404
+// @Success 200 {array} dto.StaffResponse
+// @Failure 404 {object} dto.ErrorResponse
 // @Failure 422 {object} map[string]string "Validation errors"
 // @Failure 401 {object} dto.ErrorResponse "Unauthorized"
 // @Failure 403 {object} dto.ErrorResponse "Forbidden"
@@ -104,7 +107,6 @@ func (h *StaffHandler) getStaffsByBusiness(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Преобразуем в DTO
 	var responses []dto.StaffResponse
 	for _, staff := range staffs {
 		responses = append(responses, h.convertToStaffResponse(&staff))
@@ -113,7 +115,6 @@ func (h *StaffHandler) getStaffsByBusiness(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(responses)
 }
 
-// Вспомогательный метод для преобразования domain.Staff в dto.StaffResponse
 func (h *StaffHandler) convertToStaffResponse(staff *domain.Staff) dto.StaffResponse {
 	fullName := staff.FirstName
 	if staff.LastName != "" {
@@ -123,6 +124,7 @@ func (h *StaffHandler) convertToStaffResponse(staff *domain.Staff) dto.StaffResp
 	return dto.StaffResponse{
 		ID:             staff.ID,
 		BusinessID:     staff.BusinessID,
+		LocationID:     staff.LocationID,
 		FirstName:      staff.FirstName,
 		LastName:       staff.LastName,
 		FullName:       fullName,
@@ -179,7 +181,6 @@ func (h *StaffHandler) getStaff(w http.ResponseWriter, r *http.Request) {
 func (h *StaffHandler) updateStaff(w http.ResponseWriter, r *http.Request) {
 	staffID := chi.URLParam(r, "staffID")
 
-	// Получаем существующего сотрудника
 	staff, err := h.uc.GetById(r.Context(), staffID)
 	if err != nil {
 		ErrorResponse(w, http.StatusNotFound, "staff not found")
@@ -198,7 +199,6 @@ func (h *StaffHandler) updateStaff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Обновляем только переданные поля
 	if req.FirstName != "" {
 		staff.FirstName = req.FirstName
 	}
@@ -219,6 +219,9 @@ func (h *StaffHandler) updateStaff(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Specialization != "" {
 		staff.Specialization = req.Specialization
+	}
+	if req.LocationID != "" {
+		staff.LocationID = req.LocationID
 	}
 	if req.IsActive != nil {
 		staff.IsActive = *req.IsActive

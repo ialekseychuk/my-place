@@ -1,12 +1,14 @@
-import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Plus } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { useLocation } from '@/contexts/LocationContext'
 import type { CreateStaffRequest } from '@/types/staff'
+import { Loader2, Plus } from 'lucide-react'
+import React, { useState } from 'react'
 
 interface AddStaffFormProps {
   onSubmit: (data: CreateStaffRequest) => Promise<void>
@@ -14,6 +16,7 @@ interface AddStaffFormProps {
 }
 
 export function AddStaffForm({ onSubmit, loading = false }: AddStaffFormProps) {
+  const { locations, currentLocation } = useLocation()
   const [formData, setFormData] = useState<CreateStaffRequest>({
     first_name: '',
     last_name: '',
@@ -22,6 +25,7 @@ export function AddStaffForm({ onSubmit, loading = false }: AddStaffFormProps) {
     position: '',
     description: '',
     specialization: '',
+    location_id: currentLocation?.id
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -50,9 +54,7 @@ export function AddStaffForm({ onSubmit, loading = false }: AddStaffFormProps) {
       newErrors.position = 'Должность должна содержать минимум 2 символа'
     }
 
-    if (formData.phone && (formData.phone.length < 10 || formData.phone.length > 20)) {
-      newErrors.phone = 'Телефон должен содержать от 10 до 20 символов'
-    }
+    // Phone validation is handled by the PhoneInput component
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -70,6 +72,7 @@ export function AddStaffForm({ onSubmit, loading = false }: AddStaffFormProps) {
         position: '',
         description: '',
         specialization: '',
+        location_id: currentLocation?.id
       })
     } catch (error) {
       console.error('Error creating staff:', error)
@@ -89,10 +92,10 @@ export function AddStaffForm({ onSubmit, loading = false }: AddStaffFormProps) {
     }
   }
 
-  const handleSelectChange = (value: string) => {
+  const handleSelectChange = (field: keyof CreateStaffRequest, value: string) => {
     setFormData(prev => ({
       ...prev,
-      gender: value as CreateStaffRequest['gender']
+      [field]: value as any
     }))
   }
 
@@ -156,10 +159,10 @@ export function AddStaffForm({ onSubmit, loading = false }: AddStaffFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="phone">Телефон</Label>
-              <Input
+              <PhoneInput
                 id="phone"
                 value={formData.phone}
-                onChange={handleInputChange('phone')}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
                 placeholder="+7 (999) 123-45-67"
                 disabled={loading}
               />
@@ -172,15 +175,17 @@ export function AddStaffForm({ onSubmit, loading = false }: AddStaffFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Пол</Label>
-              <Select value={formData.gender || ''} onValueChange={handleSelectChange} disabled={loading}>
+              <Select 
+                value={formData.gender || ''} 
+                onValueChange={(value) => handleSelectChange('gender', value)} 
+                disabled={loading}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите пол" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="male">Мужской</SelectItem>
                   <SelectItem value="female">Женский</SelectItem>
-                  <SelectItem value="other">Другой</SelectItem>
-                  <SelectItem value="prefer_not_to_say">Предпочитаю не указывать</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -196,6 +201,28 @@ export function AddStaffForm({ onSubmit, loading = false }: AddStaffFormProps) {
               />
             </div>
           </div>
+
+          {locations.length > 0 && (
+            <div className="space-y-2">
+              <Label>Локация</Label>
+              <Select 
+                value={formData.location_id || ''} 
+                onValueChange={(value) => handleSelectChange('location_id', value)} 
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите локацию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map(location => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">Описание</Label>

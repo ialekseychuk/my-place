@@ -77,13 +77,20 @@ func (s *BookingService) CreateBooking(ctx context.Context, businessID string, r
 		return fmt.Errorf("time slot is not available")
 	}
 
+	// Determine location ID - use service's location if not provided
+	locationID := req.LocationID
+	if locationID == "" {
+		locationID = service.LocationID
+	}
+
 	// Create the booking
 	booking := &domain.Booking{
-		ServiceID: req.ServiceID,
-		StaffID:   req.StaffID,
-		ClientID:  client.ID,
-		StartAt:   req.StartAt,
-		EndAt:     endAt,
+		ServiceID:  req.ServiceID,
+		StaffID:    req.StaffID,
+		ClientID:   client.ID,
+		LocationID: locationID,
+		StartAt:    req.StartAt,
+		EndAt:      endAt,
 	}
 
 	return s.bookingRepo.Create(ctx, booking)
@@ -137,16 +144,17 @@ func (s *BookingService) GetBookingsByBusiness(ctx context.Context, businessID s
 		}
 
 		bookingResponses = append(bookingResponses, &dto.BookingResponse{
-			ID:            booking.ID,
-			ServiceID:     booking.ServiceID,
-			ServiceName:   service.Name,
-			StaffID:       booking.StaffID,
-			StaffName:     fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
-			StartAt:       booking.StartAt,
-			EndAt:         booking.EndAt,
-			CustomerName:  clientName,
-			CreatedAt:     booking.CreatedAt,
-			UpdatedAt:     booking.UpdatedAt,
+			ID:           booking.ID,
+			ServiceID:    booking.ServiceID,
+			ServiceName:  service.Name,
+			StaffID:      booking.StaffID,
+			StaffName:    fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
+			StartAt:      booking.StartAt,
+			EndAt:        booking.EndAt,
+			CustomerName: clientName,
+			LocationID:   booking.LocationID,
+			CreatedAt:    booking.CreatedAt,
+			UpdatedAt:    booking.UpdatedAt,
 		})
 	}
 

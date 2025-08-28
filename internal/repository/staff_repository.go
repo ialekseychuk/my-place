@@ -19,17 +19,15 @@ func NewStaffRepository(db *pgxpool.Pool) *staffRepository {
 }
 
 func (r *staffRepository) Create(ctx context.Context, s *domain.Staff) error {
-	s.CreatedAt = time.Now()
-	s.UpdatedAt = time.Now()
-	s.IsActive = true // по умолчанию активен
+	s.IsActive = true
 
 	err := r.db.QueryRow(ctx,
 		`INSERT INTO staff 
-	(business_id, first_name, last_name, phone, gender, position, description, specialization, is_active, created_at, updated_at)
-	 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-	 RETURNING id`,
-		s.BusinessID, s.FirstName, s.LastName, s.Phone, s.Gender, s.Position, s.Description, s.Specialization, s.IsActive, s.CreatedAt, s.UpdatedAt,
-	).Scan(&s.ID)
+	(business_id, location_id, first_name, last_name, phone, gender, position, description, specialization, is_active)
+	 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+	 RETURNING id, created_at, updated_at`,
+		s.BusinessID, s.LocationID, s.FirstName, s.LastName, s.Phone, s.Gender, s.Position, s.Description, s.Specialization, s.IsActive,
+	).Scan(&s.ID, &s.CreatedAt, &s.UpdatedAt)
 
 	return err
 }
@@ -37,7 +35,7 @@ func (r *staffRepository) Create(ctx context.Context, s *domain.Staff) error {
 func (r *staffRepository) ListByBusinessId(ctx context.Context, businessId string) ([]domain.Staff, error) {
 	var staff []domain.Staff
 	rows, err := r.db.Query(ctx,
-		`SELECT id, business_id, first_name, last_name, phone, gender, position, description, specialization, is_active, created_at, updated_at
+		`SELECT id, business_id, location_id, first_name, last_name, phone, gender, position, description, specialization, is_active, created_at, updated_at
 		 FROM staff
 		 WHERE business_id = $1 AND is_active = true
 		 ORDER BY first_name, last_name`,
@@ -50,7 +48,7 @@ func (r *staffRepository) ListByBusinessId(ctx context.Context, businessId strin
 
 	for rows.Next() {
 		var s domain.Staff
-		err := rows.Scan(&s.ID, &s.BusinessID, &s.FirstName, &s.LastName, &s.Phone, &s.Gender, &s.Position, &s.Description, &s.Specialization, &s.IsActive, &s.CreatedAt, &s.UpdatedAt)
+		err := rows.Scan(&s.ID, &s.BusinessID, &s.LocationID, &s.FirstName, &s.LastName, &s.Phone, &s.Gender, &s.Position, &s.Description, &s.Specialization, &s.IsActive, &s.CreatedAt, &s.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -63,10 +61,10 @@ func (r *staffRepository) ListByBusinessId(ctx context.Context, businessId strin
 func (r *staffRepository) GetById(ctx context.Context, id string) (*domain.Staff, error) {
 	var s domain.Staff
 	err := r.db.QueryRow(ctx,
-		`SELECT id, business_id, first_name, last_name, phone, gender, position, description, specialization, is_active, created_at, updated_at
+		`SELECT id, business_id, location_id, first_name, last_name, phone, gender, position, description, specialization, is_active, created_at, updated_at
 	 FROM staff
 	 WHERE id = $1`,
-		id).Scan(&s.ID, &s.BusinessID, &s.FirstName, &s.LastName, &s.Phone, &s.Gender, &s.Position, &s.Description, &s.Specialization, &s.IsActive, &s.CreatedAt, &s.UpdatedAt)
+		id).Scan(&s.ID, &s.BusinessID, &s.LocationID, &s.FirstName, &s.LastName, &s.Phone, &s.Gender, &s.Position, &s.Description, &s.Specialization, &s.IsActive, &s.CreatedAt, &s.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -80,10 +78,10 @@ func (r *staffRepository) Update(ctx context.Context, s *domain.Staff) error {
 	_, err := r.db.Exec(ctx,
 		`UPDATE staff 
 		 SET first_name = $2, last_name = $3, phone = $4, gender = $5, position = $6, 
-		     description = $7, specialization = $8, is_active = $9, updated_at = $10
+		     description = $7, specialization = $8, is_active = $9, location_id = $10, updated_at = $11
 		 WHERE id = $1`,
 		s.ID, s.FirstName, s.LastName, s.Phone, s.Gender, s.Position,
-		s.Description, s.Specialization, s.IsActive, s.UpdatedAt)
+		s.Description, s.Specialization, s.IsActive, s.LocationID, s.UpdatedAt)
 
 	return err
 }

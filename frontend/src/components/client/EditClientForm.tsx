@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { Loader2, Save } from 'lucide-react'
 import type { Client, UpdateClientRequest } from '@/types/client'
 
@@ -59,9 +60,8 @@ export function EditClientForm({ client, onSubmit, loading = false, onCancel }: 
 
     if (!formData.phone?.trim()) {
       newErrors.phone = 'Телефон обязателен'
-    } else if (formData.phone.length < 10 || formData.phone.length > 20) {
-      newErrors.phone = 'Телефон должен содержать от 10 до 20 символов'
     }
+    // Phone format validation is handled by the PhoneInput component
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -149,10 +149,10 @@ export function EditClientForm({ client, onSubmit, loading = false, onCancel }: 
 
             <div className="space-y-2">
               <Label htmlFor="phone">Телефон *</Label>
-              <Input
+              <PhoneInput
                 id="phone"
                 value={formData.phone || ''}
-                onChange={handleInputChange('phone')}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
                 placeholder="+7 (999) 123-45-67"
                 disabled={loading}
               />

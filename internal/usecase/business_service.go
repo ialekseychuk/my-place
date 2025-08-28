@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -14,17 +15,20 @@ import (
 
 type BusinessUseCase struct {
 	businessRepo     domain.BusinessRepository
+	locationRepo     domain.LocationRepository
 	userRepo         domain.UserRepository
 	workingHoursRepo domain.BusinessWorkingHoursRepository
 }
 
 func NewBusinessUseCase(
 	businessRepo domain.BusinessRepository,
+	locationRepo domain.LocationRepository,
 	userRepo domain.UserRepository,
 	workingHoursRepo domain.BusinessWorkingHoursRepository,
 ) *BusinessUseCase {
 	return &BusinessUseCase{
 		businessRepo:     businessRepo,
+		locationRepo:     locationRepo,
 		userRepo:         userRepo,
 		workingHoursRepo: workingHoursRepo,
 	}
@@ -97,6 +101,21 @@ func (uc *BusinessUseCase) RegisterBusiness(ctx context.Context, req dto.CreateB
 	workingHours := uc.convertWorkingHours(businessID, req.WorkingHours)
 	if err := uc.workingHoursRepo.CreateBatch(ctx, workingHours); err != nil {
 		return nil, fmt.Errorf("failed to create working hours: %w", err)
+	}
+
+	location := &domain.Location{
+		BusinessID:  businessID,
+		Name:        req.BusinessName,
+		Address:     req.Address,
+		City:        req.City,
+		Timezone:    req.Timezone,
+		ContactInfo: req.Email,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	if err := uc.locationRepo.CreateLocation(ctx, location); err != nil {
+		return nil, fmt.Errorf("failed to create location: %w", err)
 	}
 
 	return &dto.CreateBusinessResponse{

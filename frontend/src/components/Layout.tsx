@@ -2,22 +2,25 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import {
-  Calendar,
-  Home,
-  Link2,
-  LogOut,
-  Menu,
-  Package,
-  Settings,
-  Users,
-  X,
-  User
+    Calendar,
+    Home,
+    Link2,
+    LogOut,
+    MapPin,
+    Menu,
+    Package,
+    Settings,
+    User,
+    Users,
+    X
 } from 'lucide-react'
 import React from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { LocationSelector } from '@/components/LocationSelector'
 
 const navigation = [
   { name: 'Панель управления', href: '/', icon: Home },
+  { name: 'Локации', href: '/locations', icon: MapPin },
   { name: 'Персонал', href: '/staff', icon: Users },
   { name: 'Услуги персонала', href: '/staff-services', icon: Link2 },
   { name: 'Услуги', href: '/services', icon: Package },
@@ -112,6 +115,7 @@ export function Layout() {
             </Button>
             
             <div className="flex items-center space-x-4">
+              <LocationSelector />
               <div className="text-sm text-muted-foreground">
                 Добро пожаловать, {user?.email || 'Пользователь'}
               </div>

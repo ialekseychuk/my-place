@@ -73,6 +73,21 @@ class ServiceService {
     return response.json()
   }
 
+  async deleteService(businessId: string, serviceId: string): Promise<void> {
+    const response = await fetch(`${this.baseURL}/businesses/${businessId}/services/${serviceId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to delete service')
+    }
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('access_token')
     return token ? { Authorization: `Bearer ${token}` } : {}

@@ -56,7 +56,7 @@ CREATE TABLE staff_schedule_templates (
     updated_at timestamp NOT NULL DEFAULT now()
 );
 
--- Таблица для логирования изменений доступности мастеров
+
 CREATE TABLE staff_availability_logs (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     staff_id uuid NOT NULL REFERENCES staff(id) ON DELETE CASCADE,

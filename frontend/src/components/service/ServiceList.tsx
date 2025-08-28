@@ -1,8 +1,8 @@
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Package, Clock, Edit, Trash2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useLocation } from '@/contexts/LocationContext'
 import type { Service } from '@/types/service'
+import { Clock, Edit, MapPin, Package, Trash2 } from 'lucide-react'
 
 interface ServiceListProps {
   services: Service[]
@@ -12,6 +12,9 @@ interface ServiceListProps {
 }
 
 export function ServiceList({ services, loading = false, onEdit, onDelete }: ServiceListProps) {
+  const { locations } = useLocation()
+  const safeServices = Array.isArray(services) ? services : []
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -30,7 +33,7 @@ export function ServiceList({ services, loading = false, onEdit, onDelete }: Ser
     )
   }
 
-  if (services.length === 0) {
+  if (safeServices.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
@@ -60,9 +63,15 @@ export function ServiceList({ services, loading = false, onEdit, onDelete }: Ser
     return `${hours} ч ${remainingMinutes} мин`
   }
 
+  const getLocationName = (locationId?: string): string => {
+    if (!locationId) return 'Не указана'
+    const location = locations.find(loc => loc.id === locationId)
+    return location ? location.name : 'Не найдена'
+  }
+
   return (
     <div className="space-y-4">
-      {services.map((service) => (
+      {safeServices.map((service) => (
         <Card key={service.id} className="transition-shadow hover:shadow-md">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
@@ -103,6 +112,13 @@ export function ServiceList({ services, loading = false, onEdit, onDelete }: Ser
                   <span>{formatPrice(service.price_cents)} ₽</span>
                 </div>
               </div>
+
+              {service.location_id && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span>{getLocationName(service.location_id)}</span>
+                </div>
+              )}
 
               <div className="text-xs text-muted-foreground">
                 Добавлена: {new Date(service.created_at).toLocaleDateString('ru-RU')}

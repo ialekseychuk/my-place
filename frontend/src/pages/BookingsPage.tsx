@@ -1,4 +1,4 @@
-import { BookingsManager } from '@/components/BookingsManager'
+import { BookingsManager } from '@/components/booking/BookingsManager'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'

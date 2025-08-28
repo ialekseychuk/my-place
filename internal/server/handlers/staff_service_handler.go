@@ -27,6 +27,7 @@ func (h *StaffServiceHandler) Routes() chi.Router {
 	r.Delete("/{staffID}/services/{serviceID}", h.unassignServiceFromStaff)
 	r.Get("/{staffID}/services", h.getStaffServices)
 	r.Put("/{staffID}/services", h.replaceStaffServices)
+	r.Get("/", h.getAllStaffServices) // New endpoint
 	return r
 }
 
@@ -210,6 +211,41 @@ func (h *StaffServiceHandler) replaceStaffServices(w http.ResponseWriter, r *htt
 			PriceCents:  service.PriceCents,
 			CreatedAt:   service.CreatedAt,
 			UpdatedAt:   service.UpdatedAt,
+		})
+	}
+
+	json.NewEncoder(w).Encode(responses)
+}
+
+// @Summary Get all staff services for business
+// @Description Gets all staff-service assignments for a business
+// @Tags StaffServices
+// @Produce json
+// @Param businessID path string true "Business ID"
+// @Success 200 {array} dto.StaffServiceResponse
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Security Bearer
+// @Router /api/v1/businesses/{businessID}/staff-services [get]
+func (h *StaffServiceHandler) getAllStaffServices(w http.ResponseWriter, r *http.Request) {
+	businessID := chi.URLParam(r, "businessID")
+
+	staffServices, err := h.staffService.GetStaffServicesByBusiness(r.Context(), businessID)
+	if err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var responses []dto.StaffServiceResponse
+	for _, ss := range staffServices {
+		responses = append(responses, dto.StaffServiceResponse{
+			ID:          ss.ID,
+			StaffID:     ss.StaffID,
+			ServiceID:   ss.ServiceID,
+			StaffName:   ss.StaffName,
+			ServiceName: ss.ServiceName,
+			CreatedAt:   ss.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   ss.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 

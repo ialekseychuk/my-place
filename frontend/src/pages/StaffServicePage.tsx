@@ -1,4 +1,4 @@
-import { StaffServiceAssignment } from '@/components/StaffServiceAssignment'
+import { StaffServiceAssignment } from '@/components/staff/StaffServiceAssignment'
 
 export function StaffServicePage() {
   return <StaffServiceAssignment />

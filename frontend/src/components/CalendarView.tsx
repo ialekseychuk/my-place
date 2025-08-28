@@ -11,7 +11,7 @@ import type {
 } from '@/services/scheduleService'
 import { ScheduleService } from '@/services/scheduleService'
 import { AlertCircle, ChevronLeft, ChevronRight, Clock, Edit, Plus, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 interface Staff {
   id: string
@@ -43,9 +43,12 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
   const [showShiftDetails, setShowShiftDetails] = useState(false)
   const [selectedShift, setSelectedShift] = useState<ShiftResponse | null>(null)
 
+  // Create a string representation of selectedStaffIds for useEffect dependencies
+  const selectedStaffIdsString = useMemo(() => selectedStaffIds.join(','), [selectedStaffIds])
+
   useEffect(() => {
     loadWeeklySchedule()
-  }, [currentWeek, selectedStaffIds])
+  }, [currentWeek, selectedStaffIdsString]) // Use the string representation
 
   const loadWeeklySchedule = async () => {
     setLoading(true)

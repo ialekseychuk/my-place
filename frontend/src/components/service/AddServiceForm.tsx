@@ -1,10 +1,17 @@
-import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Plus } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useLocation } from '@/contexts/LocationContext'
 import type { CreateServiceRequest } from '@/types/service'
+import { Loader2, Plus } from 'lucide-react'
+import React, { useState } from 'react'
+
+// Extended type for form state to include price input value
+interface FormState extends CreateServiceRequest {
+  priceInputValue?: string
+}
 
 interface AddServiceFormProps {
   onSubmit: (data: CreateServiceRequest) => Promise<void>
@@ -12,17 +19,15 @@ interface AddServiceFormProps {
 }
 
 export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProps) {
-  const [formData, setFormData] = useState<CreateServiceRequest>({
+  const { locations, currentLocation } = useLocation()
+  const [formData, setFormData] = useState<FormState>({
     name: '',
     duration_min: 0,
     price_cents: 0,
+    location_id: currentLocation?.id,
+    priceInputValue: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-
-  // Helper functions for price formatting
-  const formatPrice = (cents: number): string => {
-    return (cents / 100).toFixed(2)
-  }
 
   const parsePrice = (value: string): number => {
     const parsed = parseFloat(value)
@@ -33,6 +38,9 @@ export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProp
     e.preventDefault()
     setErrors({})
 
+    // Parse the price from the input value
+    const priceCents = parsePrice(formData.priceInputValue || '0')
+    
     // Basic validation
     const newErrors: Record<string, string> = {}
     
@@ -46,7 +54,7 @@ export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProp
       newErrors.duration_min = 'Продолжительность должна быть больше 0'
     }
 
-    if (formData.price_cents <= 0) {
+    if (priceCents <= 0) {
       newErrors.price_cents = 'Цена должна быть больше 0'
     }
 
@@ -56,19 +64,27 @@ export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProp
     }
 
     try {
-      await onSubmit(formData)
+      // Submit with parsed price
+      await onSubmit({
+        name: formData.name,
+        duration_min: formData.duration_min,
+        price_cents: priceCents,
+        location_id: formData.location_id
+      })
       // Reset form on success
       setFormData({
         name: '',
         duration_min: 0,
         price_cents: 0,
+        location_id: currentLocation?.id,
+        priceInputValue: ''
       })
     } catch (error) {
       console.error('Error creating service:', error)
     }
   }
 
-  const handleInputChange = (field: keyof CreateServiceRequest) => (
+  const handleInputChange = (field: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = e.target.value
@@ -84,18 +100,25 @@ export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProp
         ...prev,
         [field]: isNaN(numValue) ? 0 : numValue
       }))
-    } else if (field === 'price_cents') {
-      const priceInCents = parsePrice(value)
+    } else if (field === 'priceInputValue') {
+      // For price input, we store the raw value as string
       setFormData(prev => ({
         ...prev,
-        [field]: priceInCents
+        [field]: value
       }))
     }
 
     // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
+    if (errors[field as keyof CreateServiceRequest]) {
+      setErrors(prev => ({ ...prev, [field as keyof CreateServiceRequest]: '' }))
     }
+  }
+
+  const handleSelectChange = (field: keyof FormState, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   return (
@@ -149,8 +172,8 @@ export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProp
                 type="number"
                 min="0.01"
                 step="0.01"
-                value={formatPrice(formData.price_cents)}
-                onChange={handleInputChange('price_cents')}
+                value={formData.priceInputValue || ''}
+                onChange={handleInputChange('priceInputValue')}
                 placeholder="1500.00"
                 disabled={loading}
               />
@@ -159,6 +182,28 @@ export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProp
               )}
             </div>
           </div>
+
+          {locations.length > 0 && (
+            <div className="space-y-2">
+              <Label>Локация</Label>
+              <Select 
+                value={formData.location_id || ''} 
+                onValueChange={(value) => handleSelectChange('location_id', value)} 
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите локацию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map(location => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="text-sm text-muted-foreground">
             <p>* - обязательные поля</p>

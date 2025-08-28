@@ -5,6 +5,7 @@ import "time"
 type Staff struct {
 	ID             string
 	BusinessID     string
+	LocationID     string
 	FirstName      string
 	LastName       string
 	Phone          string

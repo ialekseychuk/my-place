@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ialekseychuk/my-place/internal/domain"
+	rawsql "github.com/ialekseychuk/my-place/pkg/raw_sql"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -75,20 +76,47 @@ func (r *scheduleRepository) GetScheduleTemplate(ctx context.Context, id string)
 // =======================
 
 func (r *scheduleRepository) CreateShift(ctx context.Context, shift *domain.StaffShift) error {
-	shift.CreatedAt = time.Now()
+	sql := `INSERT INTO staff_shifts 
+		 (staff_id, shift_date, start_time, end_time, break_start_time, break_end_time, 
+		  is_available, is_manually_disabled, manual_disable_reason, shift_type, notes, updated_at, created_by, updated_by)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		 ON CONFLICT (staff_id, shift_date, start_time)
+			DO UPDATE SET
+				end_time              = EXCLUDED.end_time,
+				break_start_time      = EXCLUDED.break_start_time,
+				break_end_time        = EXCLUDED.break_end_time,
+				is_available          = EXCLUDED.is_available,
+				is_manually_disabled  = EXCLUDED.is_manually_disabled,
+				manual_disable_reason = EXCLUDED.manual_disable_reason,
+				shift_type            = EXCLUDED.shift_type,
+				notes                 = EXCLUDED.notes,
+				updated_at            = EXCLUDED.updated_at,
+				updated_by            = EXCLUDED.updated_by
+		 RETURNING id, created_at, updated_at`
 	shift.UpdatedAt = time.Now()
 
-	err := r.db.QueryRow(ctx,
-		`INSERT INTO staff_shifts 
-		 (staff_id, shift_date, start_time, end_time, break_start_time, break_end_time, 
-		  is_available, is_manually_disabled, manual_disable_reason, shift_type, notes, 
-		  created_at, updated_at, created_by, updated_by)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-		 RETURNING id`,
-		shift.StaffID, shift.ShiftDate, shift.StartTime, shift.EndTime, shift.BreakStartTime,
-		shift.BreakEndTime, shift.IsAvailable, shift.IsManuallyDisabled, shift.ManualDisableReason,
-		shift.ShiftType, shift.Notes, shift.CreatedAt, shift.UpdatedAt, shift.CreatedBy, shift.UpdatedBy,
-	).Scan(&shift.ID)
+	args := []interface{}{
+		shift.StaffID, 
+		shift.ShiftDate, 
+		shift.StartTime, 
+		shift.EndTime, 
+		shift.BreakStartTime,
+		shift.BreakEndTime, 
+		shift.IsAvailable, 
+		shift.IsManuallyDisabled, 
+		shift.ManualDisableReason,
+		shift.ShiftType, 
+		shift.Notes, 
+		shift.UpdatedAt, 
+		shift.CreatedBy, 
+		shift.UpdatedBy,
+	}
+
+	err := r.db.QueryRow(ctx,sql, args...).Scan(&shift.ID, &shift.CreatedAt, &shift.UpdatedAt)
+	if err != nil {
+		t:= rawsql.BuildSQL(sql, args)
+		fmt.Println(t)
+	}
 
 	return err
 }
@@ -144,9 +172,9 @@ func (r *scheduleRepository) SetDefaultTemplate(ctx context.Context, staffID, te
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction:")
 	}
-	
+
 	defer tx.Rollback(ctx)
-	
+
 	if _, err := r.db.Exec(ctx, `UPDATE staff_templates SET is_default = false WHERE staff_id = $1`, staffID); err != nil {
 		return fmt.Errorf("failed to set default template: %w", err)
 	}

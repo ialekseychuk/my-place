@@ -22,7 +22,7 @@ import (
 // @version 1.0
 // @description This is a sample API with OpenAPI documentation.
 // @host localhost:81
-// @BasePath /api
+// @BasePath http://localhost:81
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
@@ -46,17 +46,19 @@ func main() {
 	bookingRepo := repository.NewBookingRepository(db)
 	staffServiceRepo := repository.NewStaffServiceRepository(db)
 	scheduleRepo := repository.NewScheduleRepository(db)
-	clientRepo := repository.NewClientRepository(db) // Add client repository
+	clientRepo := repository.NewClientRepository(db)
+	locationRepo := repository.NewLocationRepository(db)
 
 	// usecases
-	ucBusines := usecase.NewBusinessUseCase(businesRepo, userRepo, workingHoursRepo)
+	ucBusines := usecase.NewBusinessUseCase(businesRepo, locationRepo, userRepo, workingHoursRepo)
 	authService := usecase.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
 
 	ucService := usecase.NewServiceUseCase(serviceRepo)
 	ucStaff := usecase.NewStaffUseCase(staffRepo, staffServiceRepo, serviceRepo)
-	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo, clientRepo) // Update booking service
+	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo, clientRepo) 
 	scheduleService := usecase.NewScheduleService(scheduleRepo, staffRepo)
-	clientService := usecase.NewClientService(clientRepo) // Add client service
+	clientService := usecase.NewClientService(clientRepo)
+	locationService := usecase.NewLocationService(locationRepo)
 
 	//handlers
 
@@ -68,7 +70,8 @@ func main() {
 	stsh := handlers.NewStaffServiceHandler(ucStaff)
 	bkh := handlers.NewBookingHandler(ucBooking)
 	scheduleHandler := handlers.NewScheduleHandler(scheduleService)
-	clientHandler := handlers.NewClientHandler(clientService) // Add client handler
+	clientHandler := handlers.NewClientHandler(clientService)
+	locationHandler := handlers.NewLocationHandler(locationService) 
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger(logger))
@@ -107,6 +110,7 @@ func main() {
 					bir.Group(func(owner chi.Router) {
 						owner.Use(middleware.RequireRole("owner"))
 						owner.Get("/", bh.GetBusiness)
+						owner.Mount("/locations", locationHandler.Routes())
 						owner.Mount("/services", sh.Routes())
 						owner.Mount("/staffs", sth.Routes())
 						owner.Mount("/staff-services", stsh.Routes())

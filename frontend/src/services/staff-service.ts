@@ -8,6 +8,23 @@ import type {
 class StaffServiceService {
   private readonly baseURL = '/api/v1'
 
+  async getAllStaffServices(businessId: string): Promise<StaffServiceAssignment[]> {
+    const response = await fetch(`${this.baseURL}/businesses/${businessId}/staff-services`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to fetch staff services')
+    }
+
+    return response.json()
+  }
+
   async getStaffServices(businessId: string, staffId: string): Promise<Service[]> {
     const response = await fetch(`${this.baseURL}/businesses/${businessId}/staff-services/${staffId}/services`, {
       method: 'GET',

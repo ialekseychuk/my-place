@@ -1,56 +1,38 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Plus, Package } from 'lucide-react'
-import { AddServiceForm } from '@/components/AddServiceForm'
-import { EditServiceForm } from '@/components/EditServiceForm'
-import { ServiceList } from '@/components/ServiceList'
-import { serviceService } from '@/services/service'
+import { AddServiceForm } from '@/components/service/AddServiceForm'
+import { EditServiceForm } from '@/components/service/EditServiceForm'
+import { ServiceList } from '@/components/service/ServiceList'
 import { useAuth } from '@/contexts/AuthContext'
+import { useServiceData } from '@/contexts/ServiceDataContext'
+import { serviceService } from '@/services/service'
 import type { Service, CreateServiceRequest, UpdateServiceRequest } from '@/types/service'
+import { useToast } from '@/hooks/use-toast'
+import { useNotification } from '@/contexts/NotificationContext'
 
 export function ServicesPage() {
   const { user } = useAuth()
-  const [services, setServices] = useState<Service[]>([])
-  const [loading, setLoading] = useState(true)
+  const { services, loading, error, refreshServices } = useServiceData()
   const [creating, setCreating] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const loadServices = async () => {
-    if (!user?.business_id) return
-
-    try {
-      setLoading(true)
-      const servicesData = await serviceService.getServicesByBusiness(user.business_id)
-      setServices(servicesData)
-      setError(null)
-    } catch (err) {
-      setError('Ошибка при загрузке списка услуг')
-      console.error('Error loading services:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadServices()
-  }, [user?.business_id])
+  const { toast } = useToast()
+  const { showConfirm } = useNotification()
 
   const handleCreateService = async (serviceData: CreateServiceRequest) => {
     if (!user?.business_id) return
 
     try {
       setCreating(true)
-      const newService = await serviceService.createService(user.business_id, serviceData)
-      setServices(prev => [newService, ...prev])
+      await serviceService.createService(user.business_id, serviceData)
+      // Update the shared context
+      await refreshServices()
       setShowAddForm(false)
-      setError(null)
     } catch (err) {
-      setError('Ошибка при создании услуги')
       console.error('Error creating service:', err)
       throw err // Re-throw to prevent form reset
     } finally {
@@ -67,12 +49,11 @@ export function ServicesPage() {
 
     try {
       setUpdating(true)
-      const updatedService = await serviceService.updateService(user.business_id, editingService.id, serviceData)
-      setServices(prev => prev.map(s => s.id === updatedService.id ? updatedService : s))
+      await serviceService.updateService(user.business_id, editingService.id, serviceData)
+      // Update the shared context
+      await refreshServices()
       setEditingService(null)
-      setError(null)
     } catch (err) {
-      setError('Ошибка при обновлении услуги')
       console.error('Error updating service:', err)
       throw err
     } finally {
@@ -81,9 +62,39 @@ export function ServicesPage() {
   }
 
   const handleDeleteService = async (serviceId: string) => {
-    // TODO: Implement delete functionality
-    console.log('Delete service:', serviceId)
+    if (!user?.business_id) return
+
+    // Show confirmation dialog
+    const confirmed = await showConfirm({
+      title: 'Удалить услугу?',
+      description: 'Вы уверены, что хотите удалить эту услугу? Это действие нельзя отменить.',
+      variant: 'destructive',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена'
+    })
+
+    if (!confirmed) return
+
+    try {
+      await serviceService.deleteService(user.business_id, serviceId)
+      // Update the shared context
+      await refreshServices()
+      toast({
+        title: 'Услуга удалена',
+        description: 'Услуга успешно удалена',
+      })
+    } catch (err) {
+      console.error('Error deleting service:', err)
+      toast({
+        title: 'Ошибка удаления',
+        description: 'Не удалось удалить услугу. Попробуйте позже.',
+        variant: 'destructive',
+      })
+    }
   }
+
+  // Ensure services is an array
+  const safeServices = Array.isArray(services) ? services : []
 
   return (
     <div className="space-y-6">
@@ -133,15 +144,15 @@ export function ServicesPage() {
             Список услуг
           </CardTitle>
           <CardDescription>
-            {services.length > 0
-              ? `Всего услуг: ${services.length}`
+            {safeServices.length > 0
+              ? `Всего услуг: ${safeServices.length}`
               : 'Здесь будет отображаться список всех услуг'
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ServiceList
-            services={services}
+            services={safeServices}
             loading={loading}
             onEdit={handleEditService}
             onDelete={handleDeleteService}

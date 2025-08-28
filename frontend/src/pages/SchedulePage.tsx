@@ -1,12 +1,12 @@
 import { CalendarView } from '@/components/CalendarView'
-import { ScheduleTemplatesManager } from '@/components/ScheduleTemplatesManager'
-import { ShiftManager } from '@/components/ShiftManager'
+import { ScheduleTemplatesManager } from '@/components/shedule/ScheduleTemplatesManager'
+import { ShiftManager } from '@/components/shift/ShiftManager'
 import { TimeOffManager } from '@/components/TimeOffManager'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/AuthContext'
-import { apiRequest } from '@/services/api'
+import { useStaffData } from '@/contexts/StaffDataContext'
 import type {
     ScheduleStatsResponse,
     ScheduleTemplateResponse,
@@ -18,20 +18,11 @@ import { ScheduleService } from '@/services/scheduleService'
 import { BarChart3, CalendarDays, Clock, FileText, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-interface Staff {
-  id: string
-  first_name: string
-  last_name: string
-  position: string
-  is_active: boolean
-}
-
 export function SchedulePage() {
   const { user } = useAuth()
+  const { staff, loading } = useStaffData()
   const [activeTab, setActiveTab] = useState('calendar')
   const [selectedWeek, setSelectedWeek] = useState(getCurrentWeek())
-  const [staff, setStaff] = useState<Staff[]>([])
-  const [loading, setLoading] = useState(false)
   const [businessId, setBusinessId] = useState<string>('')
   const [scheduleService, setScheduleService] = useState<ScheduleService | null>(null)
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklyScheduleViewResponse | null>(null)
@@ -41,7 +32,6 @@ export function SchedulePage() {
     if (user?.business_id) {
       setBusinessId(user.business_id)
       setScheduleService(new ScheduleService(user.business_id))
-      loadData(user.business_id)
     }
   }, [user])
 
@@ -50,34 +40,6 @@ export function SchedulePage() {
       loadWeeklySchedule()
     }
   }, [selectedWeek, scheduleService, activeTab])
-
-  const loadData = async (businessIdParam?: string) => {
-    const currentBusinessId = businessIdParam || businessId
-    if (!currentBusinessId) {
-      return
-    }
-    
-    setLoading(true)
-    try {
-      // Load staff data
-      const staffData = await apiRequest<Staff[]>(`/api/v1/businesses/${currentBusinessId}/staffs`)
-      setStaff(staffData.filter((s: Staff) => s.is_active))
-      
-      // Load business statistics
-      if (scheduleService) {
-        try {
-          const stats = await scheduleService.getBusinessScheduleStats('current_month')
-          setBusinessStats(stats)
-        } catch (error) {
-          // Silently handle stats loading error
-        }
-      }
-    } catch (error) {
-      // Handle error appropriately
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const loadWeeklySchedule = async () => {
     if (!scheduleService) return
@@ -138,6 +100,9 @@ export function SchedulePage() {
     }
   }
 
+  // Ensure staff is an array
+  const safeStaff = Array.isArray(staff) ? staff : []
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -180,23 +145,23 @@ export function SchedulePage() {
               </CardContent>
             </Card>
           )}
-          {businessId && staff.length === 0 && loading && (
+          {businessId && safeStaff.length === 0 && loading && (
             <Card>
               <CardContent className="text-center py-8">
                 <p className="text-muted-foreground">Загрузка сотрудников...</p>
               </CardContent>
             </Card>
           )}
-          {businessId && staff.length === 0 && !loading && (
+          {businessId && safeStaff.length === 0 && !loading && (
             <Card>
               <CardContent className="text-center py-8">
                 <p className="text-muted-foreground">Нет активных сотрудников. Добавьте сотрудника для работы с расписанием.</p>
               </CardContent>
             </Card>
           )}
-          {businessId && staff.length > 0 && (
+          {businessId && safeStaff.length > 0 && (
             <CalendarView 
-              staff={staff}
+              staff={safeStaff.filter((s) => s.is_active)}
               businessId={businessId}
               onShiftClick={(shift) => {
                 // You can add edit functionality here
@@ -212,7 +177,7 @@ export function SchedulePage() {
         <TabsContent value="shifts" className="space-y-4">
           {businessId && (
             <ShiftManager 
-              staff={staff}
+              staff={safeStaff}
               businessId={businessId}
               selectedDate={selectedWeek}
               onShiftCreated={handleShiftCreated}
@@ -224,7 +189,7 @@ export function SchedulePage() {
         <TabsContent value="templates" className="space-y-4">
           {businessId && (
             <ScheduleTemplatesManager 
-              staff={staff}
+              staff={safeStaff}
               businessId={businessId}
               onTemplateCreated={handleTemplateCreated}
             />
@@ -234,7 +199,7 @@ export function SchedulePage() {
         <TabsContent value="time-off" className="space-y-4">
           {businessId && (
             <TimeOffManager 
-              staff={staff}
+              staff={safeStaff}
               businessId={businessId}
               onTimeOffCreated={handleTimeOffCreated}
               onTimeOffUpdated={handleTimeOffUpdated}
@@ -252,8 +217,8 @@ export function SchedulePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{staff.filter(s => s.is_active).length}</div>
-                <div className="text-sm text-muted-foreground">из {staff.length} всего</div>
+                <div className="text-2xl font-bold">{safeStaff.filter(s => s.is_active).length}</div>
+                <div className="text-sm text-muted-foreground">из {safeStaff.length} всего</div>
               </CardContent>
             </Card>
             
