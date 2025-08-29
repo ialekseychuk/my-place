@@ -102,17 +102,9 @@ func (h *StaffHandler) CreateStaff(w http.ResponseWriter, r *http.Request) {
 // @Security Bearer
 // @Router /api/v1/businesses/{businessID}/staffs [get]
 func (h *StaffHandler) GetStaffsByBusiness(w http.ResponseWriter, r *http.Request) {
-	// Add debug logging
 	businessId := chi.URLParam(r, "businessID")
 	locationId := r.URL.Query().Get("location_id")
-	
-	// Log that we've reached this handler
-	// In a real implementation, you would use a proper logger
-	// For now, we'll just send a response to see if we get here
-	if businessId == "debug" {
-		w.Write([]byte("Debug: GetStaffsByBusiness reached with businessId: " + businessId + " and locationId: " + locationId))
-		return
-	}
+
 	
 	staffs, err := h.uc.ListByBusinessId(r.Context(), businessId, locationId)
 	if err != nil {
@@ -169,13 +161,7 @@ func (h *StaffHandler) convertToStaffResponse(staff *domain.Staff) dto.StaffResp
 // @Router /api/v1/businesses/{businessID}/staffs/{staffID} [get]
 func (h *StaffHandler) GetStaff(w http.ResponseWriter, r *http.Request) {
 	staffID := chi.URLParam(r, "staffID")
-	
-	// Add debug logging
-	if staffID == "debug" {
-		businessID := chi.URLParam(r, "businessID")
-		w.Write([]byte("Debug: GetStaff reached with businessID: " + businessID + " and staffID: " + staffID))
-		return
-	}
+	//businessID := chi.URLParam(r, "businessID")
 	
 	staff, err := h.uc.GetById(r.Context(), staffID)
 	if err != nil {

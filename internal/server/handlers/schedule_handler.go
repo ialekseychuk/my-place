@@ -230,6 +230,7 @@ func (h *ScheduleHandler) CreateShift(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param businessID path string true "Business ID"
 // @Param staffID path string true "Staff ID"
+// @Param location_id query string false "Location ID"
 // @Param start_date query string true "Start date (YYYY-MM-DD)"
 // @Param end_date query string true "End date (YYYY-MM-DD)"
 // @Success 200 {array} dto.ShiftResponse
@@ -264,6 +265,8 @@ func (h *ScheduleHandler) GetStaffShifts(w http.ResponseWriter, r *http.Request)
 		ErrorResponse(w, http.StatusBadRequest, "Invalid end_date format, use YYYY-MM-DD")
 		return
 	}
+
+	
 
 	shifts, err := h.scheduleService.GetStaffShifts(r.Context(), staffID, startDate, endDate)
 	if err != nil {

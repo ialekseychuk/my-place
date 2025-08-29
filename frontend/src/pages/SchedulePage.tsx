@@ -48,9 +48,18 @@ export function SchedulePage() {
     
     try {
       const weeklyData = await scheduleService.getWeeklyScheduleView(selectedWeek, currentLocation?.id)
+      // Ensure staff_schedules is never null
+      if (weeklyData && weeklyData.staff_schedules === null) {
+        weeklyData.staff_schedules = []
+      }
       setWeeklySchedule(weeklyData)
     } catch (error) {
       // Handle error appropriately
+      setWeeklySchedule({
+        week_start_date: '',
+        week_end_date: '',
+        staff_schedules: []
+      })
     }
   }
 
@@ -233,9 +242,9 @@ export function SchedulePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {weeklySchedule ? 
+                  {weeklySchedule && Array.isArray(weeklySchedule.staff_schedules) ? 
                     weeklySchedule.staff_schedules.reduce((total, staff) => 
-                      total + Object.values(staff.days).reduce((dayTotal, day) => dayTotal + day.shifts.length, 0), 0
+                      total + (staff.days ? Object.values(staff.days).reduce((dayTotal, day) => dayTotal + (day.shifts?.length || 0), 0) : 0), 0
                     ) : '0'
                   }
                 </div>
@@ -252,8 +261,8 @@ export function SchedulePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {weeklySchedule ? 
-                    weeklySchedule.staff_schedules.reduce((total, staff) => total + staff.total_hours, 0).toFixed(1)
+                  {weeklySchedule && Array.isArray(weeklySchedule.staff_schedules) ? 
+                    weeklySchedule.staff_schedules.reduce((total, staff) => total + (staff.total_hours || 0), 0).toFixed(1)
                     : '0'
                   }
                 </div>
@@ -270,7 +279,7 @@ export function SchedulePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {weeklySchedule ? 
+                  {weeklySchedule && Array.isArray(weeklySchedule.staff_schedules) ? 
                     weeklySchedule.staff_schedules.reduce((total, staff) => 
                       total + (staff.time_off?.filter(t => t.status === 'approved').length || 0), 0
                     ) : '0'

@@ -18,6 +18,31 @@ interface LocationContextType {
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
+// Storage key for location persistence
+const LOCATION_STORAGE_KEY = 'currentLocationId';
+
+// Helper functions for localStorage
+const saveCurrentLocationId = (locationId: string | null) => {
+  try {
+    if (locationId) {
+      localStorage.setItem(LOCATION_STORAGE_KEY, locationId);
+    } else {
+      localStorage.removeItem(LOCATION_STORAGE_KEY);
+    }
+  } catch (error) {
+    console.warn('Failed to save location to localStorage:', error);
+  }
+};
+
+const getCurrentLocationId = (): string | null => {
+  try {
+    return localStorage.getItem(LOCATION_STORAGE_KEY);
+  } catch (error) {
+    console.warn('Failed to read location from localStorage:', error);
+    return null;
+  }
+};
+
 interface LocationProviderProps {
   children: React.ReactNode;
 }
@@ -29,6 +54,13 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
+  // Modified setCurrentLocation to save to localStorage
+  const setContextCurrentLocation = setCurrentLocation;
+  const setCurrentLocationWithStorage = (location: Location | null) => {
+    setContextCurrentLocation(location);
+    saveCurrentLocationId(location?.id || null);
+  };
+
   const fetchLocations = useCallback(async (businessId: string, options?: { forceRefresh?: boolean }) => {
     setIsLoading(true);
     setError(null);
@@ -37,16 +69,26 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       const fetchedLocations = await locationService.getLocations(businessId, options);
       setLocations(fetchedLocations);
       
-      // Set the first location as current if none is selected and locations exist
-      if ((!currentLocation || !locations.some(loc => loc.id === currentLocation.id)) && fetchedLocations.length > 0) {
-        setCurrentLocation(fetchedLocations[0]);
+      // Try to restore previously selected location
+      if (fetchedLocations.length > 0) {
+        const savedLocationId = getCurrentLocationId();
+        const savedLocation = fetchedLocations.find(loc => loc.id === savedLocationId);
+        
+        // Set the saved location if it exists, otherwise set the first location
+        if (savedLocation) {
+          setContextCurrentLocation(savedLocation);
+        } else if (!currentLocation && fetchedLocations.length > 0) {
+          setContextCurrentLocation(fetchedLocations[0]);
+        }
+      } else {
+        setContextCurrentLocation(null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch locations');
     } finally {
       setIsLoading(false);
     }
-  }, [currentLocation, locations]);
+  }, [currentLocation]);
 
   const createLocation = async (
     businessId: string,
@@ -90,7 +132,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       
       // Update current location if it was the one being updated
       if (currentLocation && currentLocation.id === locationId) {
-        setCurrentLocation(updatedLocation);
+        setCurrentLocationWithStorage(updatedLocation);
       }
       
       return updatedLocation;
@@ -112,7 +154,8 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       
       // Clear current location if it was the one being deleted
       if (currentLocation && currentLocation.id === locationId) {
-        setCurrentLocation(locations.length > 1 ? locations[0] : null);
+        const remainingLocations = locations.filter(loc => loc.id !== locationId);
+        setCurrentLocationWithStorage(remainingLocations.length > 0 ? remainingLocations[0] : null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete location');
@@ -129,7 +172,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
   const value: LocationContextType = {
     locations,
     currentLocation,
-    setCurrentLocation,
+    setCurrentLocation: setCurrentLocationWithStorage,
     fetchLocations,
     createLocation,
     updateLocation,
