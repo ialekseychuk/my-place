@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNotification } from '@/contexts/NotificationContext'
+import { formatTime } from '@/lib/utils'
 import type {
   CreateShiftRequest,
   ShiftResponse,
@@ -433,13 +434,13 @@ export function ShiftManager({
   }
 
   const calculateShiftDuration = (startTime: string, endTime: string, breakStart?: string, breakEnd?: string) => {
-    const start = new Date(`2000-01-01T${startTime}:00`)
-    const end = new Date(`2000-01-01T${endTime}:00`)
+    const start = new Date(`2000-01-01T${startTime.slice(0,8)}`)
+    const end = new Date(`2000-01-01T${endTime.slice(0,8)}`)
     let totalMinutes = (end.getTime() - start.getTime()) / (1000 * 60)
 
     if (breakStart && breakEnd) {
-      const breakStartTime = new Date(`2000-01-01T${breakStart}:00`)
-      const breakEndTime = new Date(`2000-01-01T${breakEnd}:00`)
+      const breakStartTime = new Date(`2000-01-01T${breakStart.slice(0,8)}`)
+      const breakEndTime = new Date(`2000-01-01T${breakEnd.slice(0,8)}`)
       const breakMinutes = (breakEndTime.getTime() - breakStartTime.getTime()) / (1000 * 60)
       totalMinutes -= breakMinutes
     }
@@ -789,10 +790,10 @@ export function ShiftManager({
                                   )}
                                 </div>
                                 <div className="text-sm text-muted-foreground mt-1">
-                                  {shift.start_time} - {shift.end_time}
+                                  {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
                                   {shift.break_start_time && shift.break_end_time && (
                                     <span className="ml-2">
-                                      (перерыв {shift.break_start_time}-{shift.break_end_time})
+                                      (перерыв {formatTime(shift.break_start_time)}-{formatTime(shift.break_end_time)})
                                     </span>
                                   )}
                                   <span className="ml-2">

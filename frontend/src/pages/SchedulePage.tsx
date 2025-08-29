@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/AuthContext'
 import { useStaffData } from '@/contexts/StaffDataContext'
+import { useLocation } from '@/contexts/LocationContext'
 import type {
     ScheduleStatsResponse,
     ScheduleTemplateResponse,
@@ -21,6 +22,7 @@ import { useEffect, useState } from 'react'
 export function SchedulePage() {
   const { user } = useAuth()
   const { staff, loading } = useStaffData()
+  const { currentLocation } = useLocation()
   const [activeTab, setActiveTab] = useState('calendar')
   const [selectedWeek, setSelectedWeek] = useState(getCurrentWeek())
   const [businessId, setBusinessId] = useState<string>('')
@@ -39,13 +41,13 @@ export function SchedulePage() {
     if (scheduleService && activeTab === 'calendar') {
       loadWeeklySchedule()
     }
-  }, [selectedWeek, scheduleService, activeTab])
+  }, [selectedWeek, scheduleService, activeTab, currentLocation?.id])
 
   const loadWeeklySchedule = async () => {
     if (!scheduleService) return
     
     try {
-      const weeklyData = await scheduleService.getWeeklyScheduleView(selectedWeek)
+      const weeklyData = await scheduleService.getWeeklyScheduleView(selectedWeek, currentLocation?.id)
       setWeeklySchedule(weeklyData)
     } catch (error) {
       // Handle error appropriately

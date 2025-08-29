@@ -25,8 +25,8 @@ func (s *StaffService) CreateStaff(ctx context.Context, staff *domain.Staff) err
 	return s.repo.Create(ctx, staff)
 }
 
-func (s *StaffService) ListByBusinessId(ctx context.Context, businessId string) ([]domain.Staff, error) {
-	return s.repo.ListByBusinessId(ctx, businessId)
+func (s *StaffService) ListByBusinessId(ctx context.Context, businessId, locationId string) ([]domain.Staff, error) {
+	return s.repo.ListByBusinessId(ctx, businessId, locationId)
 }
 
 func (s *StaffService) GetById(ctx context.Context, id string) (*domain.Staff, error) {

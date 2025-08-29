@@ -1031,12 +1031,13 @@ func (s *ScheduleService) convertDayScheduleTemplateToDTO(domain domain.DaySched
 // Schedule Views
 // =======================
 
-func (s *ScheduleService) GetWeeklyScheduleView(ctx context.Context, businessID string, weekStartDate time.Time, staffIDs []string) (*dto.WeeklyScheduleViewResponse, error) {
+func (s *ScheduleService) GetWeeklyScheduleView(ctx context.Context, businessID, locationID string, weekStartDate time.Time, staffIDs []string) (*dto.WeeklyScheduleViewResponse, error) {
 	weekEndDate := weekStartDate.AddDate(0, 0, 6)
 
 	// If no specific staff IDs provided, get all staff for the business
 	if len(staffIDs) == 0 {
-		allStaff, err := s.staffRepo.ListByBusinessId(ctx, businessID)
+		allStaff, err := s.staffRepo.ListByBusinessId(ctx, businessID, locationID)
+		
 		if err != nil {
 			return nil, fmt.Errorf("failed to get staff for business: %w", err)
 		}
@@ -1065,7 +1066,7 @@ func (s *ScheduleService) GetWeeklyScheduleView(ctx context.Context, businessID 
 
 func (s *ScheduleService) GetMonthlyScheduleView(ctx context.Context, businessID string, year, month time.Time, staffIDs []string) (*dto.WeeklyScheduleViewResponse, error) {
 	monthStart := time.Date(year.Year(), month.Month(), 1, 0, 0, 0, 0, time.UTC)
-	return s.GetWeeklyScheduleView(ctx, businessID, monthStart, staffIDs)
+	return s.GetWeeklyScheduleView(ctx, businessID, "", monthStart, staffIDs)
 }
 
 func (s *ScheduleService) GetStaffWeeklySchedule(ctx context.Context, staffID string, weekStartDate time.Time) (*dto.StaffWeeklyScheduleResponse, error) {

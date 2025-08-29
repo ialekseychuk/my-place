@@ -1,5 +1,6 @@
 import { DatePickerDialog } from '@/components/DatePickerDialog';
 import { Button } from '@/components/ui/button';
+import { useLocation } from '@/contexts/LocationContext';
 import { bookingService } from '@/services/bookingService';
 import { staffService } from '@/services/staff';
 import type { Booking } from '@/types/booking';
@@ -19,6 +20,7 @@ interface TimeSlot {
 }
 
 export function ScheduleView({ businessID }: ScheduleViewProps) {
+  const { currentLocation } = useLocation();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [staffMembers, setStaffMembers] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,25 +64,26 @@ export function ScheduleView({ businessID }: ScheduleViewProps) {
 
   useEffect(() => {
     fetchData();
-  }, [businessID, selectedDate]);
+  }, [businessID, selectedDate, currentLocation?.id]);
 
   const fetchData = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      // Fetch staff members
-      const staffData = await staffService.getStaffByBusiness(businessID)
+      // Fetch staff members with location filter
+      const staffData = await staffService.getStaffByBusiness(businessID, currentLocation?.id)
       setStaffMembers(staffData)
       
       // Format date for API call (YYYY-MM-DD)
       const formattedDate = format(selectedDate, 'yyyy-MM-dd')
       
-      // Fetch bookings for the selected date
+      // Fetch bookings for the selected date with location filter
       const bookingData = await bookingService.getBookings(
         businessID,
         formattedDate,
-        formattedDate
+        formattedDate,
+        currentLocation?.id
       )
       
       setBookings(bookingData || [])
@@ -199,7 +202,6 @@ export function ScheduleView({ businessID }: ScheduleViewProps) {
           <Button 
             variant="outline" 
             onClick={() => setIsDatePickerOpen(true)}
-            className="font-medium min-w-36"
           >
             {format(selectedDate, 'dd MMMM yyyy', { locale: ru })}
           </Button>
@@ -207,100 +209,85 @@ export function ScheduleView({ businessID }: ScheduleViewProps) {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" onClick={() => setSelectedDate(new Date())}>
-          Сегодня
-        </Button>
       </div>
 
-      {/* Schedule grid */}
-      <div className="border rounded-lg overflow-hidden bg-white">
-        {/* Staff headers */}
-        <div className="grid" style={{ gridTemplateColumns: `100px repeat(${staffMembers.length}, minmax(180px, 1fr))` }}>
-          <div className="border-r border-b bg-muted p-2"></div>
-          {staffMembers.map(staff => (
-            <div key={staff.id} className="border-r border-b p-3 bg-secondary text-center">
-              <div className="font-medium text-sm truncate">{staff.full_name}</div>
-              <div className="text-xs text-muted-foreground truncate">{staff.position}</div>
+      {/* Time slots grid */}
+      <div className="overflow-x-auto">
+        <div className="min-w-[800px]">
+          {/* Staff headers */}
+          <div className="grid grid-cols-[100px_repeat(auto-fit,minmax(100px,1fr))] gap-1 mb-1">
+            <div className="font-medium text-center py-2"></div>
+            {staffMembers.map(staff => (
+              <div 
+                key={staff.id} 
+                className="font-medium text-center py-2 border rounded-md bg-muted truncate"
+                title={`${staff.first_name} ${staff.last_name}`}
+              >
+                {staff.first_name} {staff.last_name.charAt(0)}.
+              </div>
+            ))}
+          </div>
+
+          {/* Time slots */}
+          {timeSlots.map((slot, index) => (
+            <div 
+              key={index} 
+              className="grid grid-cols-[100px_repeat(auto-fit,minmax(100px,1fr))] gap-1 mb-1"
+            >
+              <div className="text-xs text-muted-foreground py-2 text-center">
+                {slot.formattedTime}
+              </div>
+              {staffMembers.map(staff => {
+                const booking = getBookingAtTimeSlot(staff.id, slot.time);
+                const isStart = isBookingStart(staff.id, slot.time);
+                
+                if (booking && isStart) {
+                  // Calculate booking duration in slots (15-minute intervals)
+                  const start = new Date(booking.start_at);
+                  const end = new Date(booking.end_at);
+                  const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+                  const rowSpan = Math.ceil(durationMinutes / 15);
+                  
+                  return (
+                    <div
+                      key={`${staff.id}-${slot.time.getTime()}`}
+                      className={`rounded border ${getBookingColor(booking.service_name)} p-1 text-xs relative`}
+                      style={{ gridRow: `span ${rowSpan}` }}
+                      title={`${booking.customer_name} - ${booking.service_name}`}
+                    >
+                      <div className="font-medium truncate">{booking.customer_name}</div>
+                      <div className="truncate">{booking.service_name}</div>
+                      <div className="absolute bottom-1 right-1">
+                        <Clock className="h-3 w-3" />
+                      </div>
+                    </div>
+                  );
+                } else if (booking) {
+                  // Part of an ongoing booking, render empty element
+                  return <div key={`${staff.id}-${slot.time.getTime()}`} />;
+                } else {
+                  // Empty time slot
+                  return (
+                    <div 
+                      key={`${staff.id}-${slot.time.getTime()}`} 
+                      className="border rounded bg-background hover:bg-muted/50 cursor-pointer"
+                    />
+                  );
+                }
+              })}
             </div>
           ))}
         </div>
-
-        {/* Time slots and bookings */}
-        {timeSlots.map((timeSlot, idx) => (
-          <div 
-            key={timeSlot.formattedTime}
-            className="grid" 
-            style={{ gridTemplateColumns: `100px repeat(${staffMembers.length}, minmax(180px, 1fr))` }}
-          >
-            {/* Time column */}
-            <div className={`border-r ${idx !== timeSlots.length - 1 ? 'border-b' : ''} p-2 text-right text-sm text-muted-foreground`}>
-              {timeSlot.formattedTime}
-            </div>
-
-            {/* Staff columns */}
-            {staffMembers.map(staff => {
-              // Try to find a booking at this time slot for this staff
-              const booking = getBookingAtTimeSlot(staff.id, timeSlot.time)
-              const isStart = booking && isBookingStart(staff.id, timeSlot.time)
-              
-              if (booking && isStart) {
-                // Only show booking details at the start time
-                const colorClasses = getBookingColor(booking.service_name);
-                
-                return (
-                  <div
-                    key={`${staff.id}-${timeSlot.formattedTime}`}
-                    className={`${colorClasses} border-r border-b p-2 min-h-[20px] shadow-sm`}
-                  >
-                    <div className="font-medium text-sm truncate">{booking.service_name}</div>
-                    <div className="flex items-center text-xs mt-1">
-                      <User className="h-3 w-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">{booking.customer_name}</span>
-                    </div>
-                    <div className="flex items-center text-xs mt-1">
-                      <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
-                      <span>
-                        {format(new Date(booking.start_at), 'HH:mm', { locale: ru })} - 
-                        {format(new Date(booking.end_at), 'HH:mm', { locale: ru })}
-                      </span>
-                    </div>
-                    <div className="text-xs mt-1 truncate">
-                      <span className="opacity-70">{booking.customer_email}</span>
-                    </div>
-                  </div>
-                )
-              } else if (booking) {
-                // If it's a continuation of a booking, just show a colored cell
-                const colorClasses = getBookingColor(booking.service_name);
-                return (
-                  <div
-                    key={`${staff.id}-${timeSlot.formattedTime}`}
-                    className={`${colorClasses} border-r border-b min-h-[20px] shadow-sm`}
-                  ></div>
-                )
-              }
-              
-              // Empty cell
-              return (
-                <div
-                  key={`${staff.id}-${timeSlot.formattedTime}`}
-                  className={`border-r border-b min-h-[20px]`}
-                >
-                </div>
-              )
-            })}
-          </div>
-        ))}
       </div>
 
       <DatePickerDialog
         isOpen={isDatePickerOpen}
         onOpenChange={setIsDatePickerOpen}
         title="Выберите дату"
-        description="Выберите дату для отображения расписания"
+        description="Выберите дату для просмотра расписания"
         onConfirm={handleDateSelect}
         onCancel={() => {}}
-        defaultDate={format(selectedDate, 'yyyy-MM-dd')}
+        initialDate={selectedDate}
       />
     </div>
   )

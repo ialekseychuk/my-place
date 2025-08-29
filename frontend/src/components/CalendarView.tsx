@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLocation } from '@/contexts/LocationContext'
 import type {
   ShiftResponse,
   WeeklyScheduleViewResponse
@@ -30,6 +31,7 @@ interface CalendarViewProps {
 
 export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: CalendarViewProps) {
   const { user } = useAuth()
+  const { currentLocation } = useLocation() // Get current location from context
   const [scheduleService] = useState(() => new ScheduleService(businessId))
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklyScheduleViewResponse | null>(null)
   const [currentWeek, setCurrentWeek] = useState(() => {
@@ -48,18 +50,32 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
 
   useEffect(() => {
     loadWeeklySchedule()
-  }, [currentWeek, selectedStaffIdsString]) // Use the string representation
+  }, [currentWeek, selectedStaffIdsString, currentLocation?.id]) // Added currentLocation.id
 
   const loadWeeklySchedule = async () => {
     setLoading(true)
     try {
+     
       const data = await scheduleService.getWeeklyScheduleView(
         currentWeek, 
+        currentLocation?.id, // Add location ID parameter
         selectedStaffIds.length > 0 ? selectedStaffIds : undefined
       )
+      
+      // Ensure staff_schedules is never null
+      if (data && data.staff_schedules === null) {
+        data.staff_schedules = []
+      }
+      
       setWeeklySchedule(data)
     } catch (error) {
-      // Handle error appropriately
+      console.error('Failed to load weekly schedule:', error)
+      // Set default empty state on error
+      setWeeklySchedule({
+        week_start_date: '',
+        week_end_date: '',
+        staff_schedules: []
+      })
     } finally {
       setLoading(false)
     }
@@ -95,7 +111,7 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
   const getDayAbbr = () => ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
   const formatTime = (time: string) => {
-    return time.slice(0, 5) // Remove seconds
+    return time.slice(0, 5)
   }
 
   const handleShiftClick = (shift: ShiftResponse) => {
@@ -145,8 +161,8 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
           </div>
           
           <div className="text-lg font-semibold">
-            {new Date(weeklySchedule.week_start_date).toLocaleDateString('ru-RU')} - {' '}
-            {new Date(weeklySchedule.week_end_date).toLocaleDateString('ru-RU')}
+            {weeklySchedule ? new Date(weeklySchedule.week_start_date).toLocaleDateString('ru-RU') : ''} - {' '}
+            {weeklySchedule ? new Date(weeklySchedule.week_end_date).toLocaleDateString('ru-RU') : ''}
           </div>
         </div>
 
@@ -180,7 +196,7 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
             </div>
             <Badge variant="outline">
               <Users className="mr-1 h-3 w-3" />
-              {weeklySchedule.staff_schedules.length} сотрудников
+              {(weeklySchedule?.staff_schedules && weeklySchedule.staff_schedules.length) || 0} сотрудников
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -191,7 +207,7 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
               <div className="grid grid-cols-8 gap-1 mb-2">
                 <div className="p-2 font-semibold text-sm text-gray-600">Сотрудник</div>
                 {getDayAbbr().map((day, index) => {
-                  const monday = new Date(weeklySchedule.week_start_date)
+                  const monday = new Date(weeklySchedule?.week_start_date || new Date())
                   const currentDate = new Date(monday)
                   currentDate.setDate(monday.getDate() + index)
                   const dateStr = currentDate.toISOString().split('T')[0]
@@ -213,7 +229,7 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
               </div>
 
               {/* Schedule rows */}
-              {weeklySchedule.staff_schedules.map((staffSchedule) => (
+              {(weeklySchedule?.staff_schedules || []).map((staffSchedule) => (
                 <div key={staffSchedule.staff_id} className="grid grid-cols-8 gap-1 mb-1">
                   {/* Staff info */}
                   <div className="p-3 bg-gray-50 rounded flex flex-col">
@@ -226,7 +242,7 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
 
                   {/* Days */}
                   {Array.from({ length: 7 }, (_, dayIndex) => {
-                    const monday = new Date(weeklySchedule.week_start_date)
+                    const monday = new Date(weeklySchedule?.week_start_date || new Date())
                     const currentDate = new Date(monday)
                     currentDate.setDate(monday.getDate() + dayIndex)
                     const dateStr = currentDate.toISOString().split('T')[0]
@@ -242,7 +258,7 @@ export function CalendarView({ staff, businessId, onShiftClick, onDateClick }: C
                       >
                         {daySchedule ? (
                           <div className="space-y-1">
-                            {daySchedule.shifts.map((shift) => (
+                            {(daySchedule.shifts || []).map((shift) => (
                               <div 
                                 key={shift.id} 
                                 className={`text-xs p-1 rounded border cursor-pointer hover:shadow-sm ${getShiftTypeColor(shift.shift_type)}`}

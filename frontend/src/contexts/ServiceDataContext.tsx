@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useAuth } from './AuthContext'
+import { useLocation } from './LocationContext'
 import { serviceService } from '@/services/service'
 import type { Service } from '@/types/service'
 
@@ -14,6 +15,7 @@ const ServiceDataContext = createContext<ServiceDataContextType | undefined>(und
 
 export function ServiceDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
+  const { currentLocation } = useLocation()
   const [services, setServices] = useState<Service[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +29,7 @@ export function ServiceDataProvider({ children }: { children: ReactNode }) {
 
     try {
       setLoading(true)
-      const servicesData = await serviceService.getServicesByBusiness(user.business_id)
+      const servicesData = await serviceService.getServicesByBusiness(user.business_id, currentLocation?.id)
       // Ensure servicesData is an array
       const safeServicesData = Array.isArray(servicesData) ? servicesData : []
       setServices(safeServicesData)
@@ -44,7 +46,7 @@ export function ServiceDataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadServices()
-  }, [user?.business_id])
+  }, [user?.business_id, currentLocation?.id])
 
   const refreshServices = async () => {
     await loadServices()

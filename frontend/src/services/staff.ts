@@ -3,8 +3,13 @@ import type { CreateStaffRequest, Staff, UpdateStaffRequest } from '@/types/staf
 class StaffService {
   private readonly baseURL = '/api/v1'
 
-  async getStaffByBusiness(businessId: string): Promise<Staff[]> {
-    const response = await fetch(`${this.baseURL}/businesses/${businessId}/staffs`, {
+  async getStaffByBusiness(businessId: string, locationId: string): Promise<Staff[]> {
+    // Create URLSearchParams to handle query parameters
+    const params = new URLSearchParams();
+    params.append('location_id', locationId);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+
+    const response = await fetch(`${this.baseURL}/businesses/${businessId}/staffs${queryString}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useLocation } from '@/contexts/LocationContext'
 import { bookingService } from '@/services/bookingService'
 import type { Booking } from '@/types/booking'
 import { format } from 'date-fns'
@@ -16,6 +17,7 @@ interface BookingsManagerProps {
 }
 
 export function BookingsManager({ businessID }: BookingsManagerProps) {
+  const { currentLocation } = useLocation()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -25,7 +27,7 @@ export function BookingsManager({ businessID }: BookingsManagerProps) {
 
   useEffect(() => {
     fetchBookings()
-  }, [businessID, dateFilter])
+  }, [businessID, dateFilter, currentLocation?.id])
 
   const fetchBookings = async () => {
     try {
@@ -33,7 +35,8 @@ export function BookingsManager({ businessID }: BookingsManagerProps) {
       const data = await bookingService.getBookings(
         businessID,
         dateFilter.start,
-        dateFilter.end
+        dateFilter.end,
+        currentLocation?.id
       )
       setBookings(data || []) // Ensure we always set an array, even if data is null
       setError(null)
@@ -198,7 +201,6 @@ export function BookingsManager({ businessID }: BookingsManagerProps) {
         description={`Выберите ${filterType === 'start' ? 'дату начала' : 'дату окончания'} для фильтрации бронирований`}
         onConfirm={handleDateSelect}
         onCancel={() => {}}
-        defaultDate={filterType === 'start' ? dateFilter.start : dateFilter.end}
       />
     </div>
   )

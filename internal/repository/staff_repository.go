@@ -32,14 +32,24 @@ func (r *staffRepository) Create(ctx context.Context, s *domain.Staff) error {
 	return err
 }
 
-func (r *staffRepository) ListByBusinessId(ctx context.Context, businessId string) ([]domain.Staff, error) {
+func (r *staffRepository) ListByBusinessId(ctx context.Context, businessId, locationId string) ([]domain.Staff, error) {
 	var staff []domain.Staff
-	rows, err := r.db.Query(ctx,
-		`SELECT id, business_id, location_id, first_name, last_name, phone, gender, position, description, specialization, is_active, created_at, updated_at
+	sql := `SELECT id, business_id, location_id, first_name, last_name, phone, gender, position, description, specialization, is_active, created_at, updated_at
 		 FROM staff
 		 WHERE business_id = $1 AND is_active = true
-		 ORDER BY first_name, last_name`,
+		 `
+	args:= []interface{}{
 		businessId,
+	}	 
+	if locationId != "" {
+		sql += " AND location_id = $2"
+		args = append(args, locationId)
+	}
+
+	sql += " ORDER BY first_name, last_name"	 
+	rows, err := r.db.Query(ctx,
+		sql,
+		args...,
 	)
 	if err != nil {
 		return nil, err
@@ -58,12 +68,13 @@ func (r *staffRepository) ListByBusinessId(ctx context.Context, businessId strin
 	return staff, rows.Err()
 }
 
+
 func (r *staffRepository) GetById(ctx context.Context, id string) (*domain.Staff, error) {
 	var s domain.Staff
 	err := r.db.QueryRow(ctx,
 		`SELECT id, business_id, location_id, first_name, last_name, phone, gender, position, description, specialization, is_active, created_at, updated_at
-	 FROM staff
-	 WHERE id = $1`,
+	 	FROM staff
+	 	WHERE id = $1`,
 		id).Scan(&s.ID, &s.BusinessID, &s.LocationID, &s.FirstName, &s.LastName, &s.Phone, &s.Gender, &s.Position, &s.Description, &s.Specialization, &s.IsActive, &s.CreatedAt, &s.UpdatedAt)
 	if err != nil {
 		return nil, err

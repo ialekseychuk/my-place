@@ -860,6 +860,7 @@ func (h *ScheduleHandler) BulkDeleteShifts(w http.ResponseWriter, r *http.Reques
 // @Produce json
 // @Param businessID path string true "Business ID"
 // @Param week_start_date query string true "Week start date (YYYY-MM-DD)"
+// @Param location_id query string false "Location id to filter"
 // @Param staff_ids query []string false "Staff IDs to filter"
 // @Success 200 {object} dto.WeeklyScheduleViewResponse
 // @Failure 400 {object} dto.ErrorResponse "Bad request"
@@ -868,6 +869,7 @@ func (h *ScheduleHandler) BulkDeleteShifts(w http.ResponseWriter, r *http.Reques
 // @Router /api/v1/businesses/{businessID}/schedule/views/weekly [get]
 func (h *ScheduleHandler) GetWeeklyScheduleView(w http.ResponseWriter, r *http.Request) {
 	businessID := chi.URLParam(r, "businessID")
+	locationID := r.URL.Query().Get("location_id")
 	if businessID == "" {
 		ErrorResponse(w, http.StatusBadRequest, "Business ID is required")
 		return
@@ -887,7 +889,7 @@ func (h *ScheduleHandler) GetWeeklyScheduleView(w http.ResponseWriter, r *http.R
 
 	staffIDs := r.URL.Query()["staff_ids"]
 
-	scheduleView, err := h.scheduleService.GetWeeklyScheduleView(r.Context(), businessID, weekStartDate, staffIDs)
+	scheduleView, err := h.scheduleService.GetWeeklyScheduleView(r.Context(), businessID, locationID, weekStartDate, staffIDs)
 	if err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return

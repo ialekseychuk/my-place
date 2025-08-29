@@ -270,9 +270,12 @@ export class ScheduleService {
   // Schedule Views
   // =======================
 
-  async getWeeklyScheduleView(weekStartDate: string, staffIds?: string[]): Promise<WeeklyScheduleViewResponse> {
+  async getWeeklyScheduleView(weekStartDate: string, locationId?: string, staffIds?: string[]): Promise<WeeklyScheduleViewResponse> {
     const params = new URLSearchParams()
     params.append('week_start_date', weekStartDate)
+    if (locationId) {
+      params.append('location_id', locationId)
+    }
     if (staffIds && staffIds.length > 0) {
       staffIds.forEach(id => params.append('staff_ids', id))
     }
@@ -280,10 +283,13 @@ export class ScheduleService {
     return apiRequest<WeeklyScheduleViewResponse>(`${this.baseUrl}/views/weekly?${params.toString()}`)
   }
 
-  async getMonthlyScheduleView(year: number, month: number, staffIds?: string[]): Promise<WeeklyScheduleViewResponse> {
+  async getMonthlyScheduleView(year: number, month: number, locationId?: string, staffIds?: string[]): Promise<WeeklyScheduleViewResponse> {
     const params = new URLSearchParams()
     params.append('year', year.toString())
     params.append('month', month.toString())
+    if (locationId) {
+      params.append('location_id', locationId)
+    }
     if (staffIds && staffIds.length > 0) {
       staffIds.forEach(id => params.append('staff_ids', id))
     }
@@ -291,8 +297,13 @@ export class ScheduleService {
     return apiRequest<WeeklyScheduleViewResponse>(`${this.baseUrl}/views/monthly?${params.toString()}`)
   }
 
-  async getStaffWeeklySchedule(staffId: string, weekStartDate: string): Promise<StaffWeeklyScheduleResponse> {
-    return apiRequest<StaffWeeklyScheduleResponse>(`${this.baseUrl}/views/staff/${staffId}/weekly?week_start_date=${weekStartDate}`)
+  async getStaffWeeklySchedule(staffId: string, weekStartDate: string, locationId?:string): Promise<StaffWeeklyScheduleResponse> {
+    const params = new URLSearchParams()
+    params.append('week_start_date', weekStartDate)
+    if (locationId) {
+      params.append('location_id', locationId)
+    }
+    return apiRequest<StaffWeeklyScheduleResponse>(`${this.baseUrl}/views/staff/${staffId}/weekly?${params.toString()}`)
   }
 
   async getStaffDaySchedule(staffId: string, date: string): Promise<DayScheduleResponse> {

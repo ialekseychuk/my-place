@@ -37,9 +37,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <StaffDataProvider>
-          <ServiceDataProvider>
-            <LocationProvider>
+        <LocationProvider>
+          <StaffDataProvider>
+            <ServiceDataProvider>
               <DialogProvider dialogState={dialogState}>
                 <NotificationProvider dialogState={dialogState}>
                   <Router>
@@ -69,9 +69,9 @@ function App() {
                   <Toaster />
                 </NotificationProvider>
               </DialogProvider>
-            </LocationProvider>
-          </ServiceDataProvider>
-        </StaffDataProvider>
+            </ServiceDataProvider>
+          </StaffDataProvider>
+        </LocationProvider>
       </AuthProvider>
     </QueryClientProvider>
   )

@@ -23,10 +23,10 @@ func NewStaffHandler(uc *usecase.StaffService) *StaffHandler {
 
 func (h *StaffHandler) Routes() chi.Router {
 	r := chi.NewRouter()
-	r.Post("/", h.createStaff)
-	r.Get("/", h.getStaffsByBusiness)
-	r.Get("/{staffID}", h.getStaff)
-	r.Put("/{staffID}", h.updateStaff)
+	r.Post("/", h.CreateStaff)
+	r.Get("/", h.GetStaffsByBusiness)
+	r.Get("/{staffID}", h.GetStaff)
+	r.Put("/{staffID}", h.UpdateStaff)
 	return r
 }
 
@@ -44,7 +44,8 @@ func (h *StaffHandler) Routes() chi.Router {
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security Bearer
 // @Router /api/v1/businesses/{businessID}/staffs [post]
-func (h *StaffHandler) createStaff(w http.ResponseWriter, r *http.Request) {
+func (h *StaffHandler) CreateStaff(w http.ResponseWriter, r *http.Request) {
+
 	businessId := chi.URLParam(r, "businessID")
 	var req dto.CreateStaffRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -86,11 +87,12 @@ func (h *StaffHandler) createStaff(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary get staffs
-// @Description get staffs
+// @Description get staffs for company or location
 // @Tags Staff
 // @Accept json
 // @Produce json
 // @Param businessID path string true "Business ID"
+// @Param location_id query string false "Location ID"
 // @Success 200 {array} dto.StaffResponse
 // @Failure 404 {object} dto.ErrorResponse
 // @Failure 422 {object} map[string]string "Validation errors"
@@ -99,9 +101,20 @@ func (h *StaffHandler) createStaff(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security Bearer
 // @Router /api/v1/businesses/{businessID}/staffs [get]
-func (h *StaffHandler) getStaffsByBusiness(w http.ResponseWriter, r *http.Request) {
+func (h *StaffHandler) GetStaffsByBusiness(w http.ResponseWriter, r *http.Request) {
+	// Add debug logging
 	businessId := chi.URLParam(r, "businessID")
-	staffs, err := h.uc.ListByBusinessId(r.Context(), businessId)
+	locationId := r.URL.Query().Get("location_id")
+	
+	// Log that we've reached this handler
+	// In a real implementation, you would use a proper logger
+	// For now, we'll just send a response to see if we get here
+	if businessId == "debug" {
+		w.Write([]byte("Debug: GetStaffsByBusiness reached with businessId: " + businessId + " and locationId: " + locationId))
+		return
+	}
+	
+	staffs, err := h.uc.ListByBusinessId(r.Context(), businessId, locationId)
 	if err != nil {
 		ErrorResponse(w, http.StatusNotFound, "not found")
 		return
@@ -112,7 +125,10 @@ func (h *StaffHandler) getStaffsByBusiness(w http.ResponseWriter, r *http.Reques
 		responses = append(responses, h.convertToStaffResponse(&staff))
 	}
 
-	json.NewEncoder(w).Encode(responses)
+	if err := json.NewEncoder(w).Encode(responses); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *StaffHandler) convertToStaffResponse(staff *domain.Staff) dto.StaffResponse {
@@ -151,8 +167,16 @@ func (h *StaffHandler) convertToStaffResponse(staff *domain.Staff) dto.StaffResp
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security Bearer
 // @Router /api/v1/businesses/{businessID}/staffs/{staffID} [get]
-func (h *StaffHandler) getStaff(w http.ResponseWriter, r *http.Request) {
+func (h *StaffHandler) GetStaff(w http.ResponseWriter, r *http.Request) {
 	staffID := chi.URLParam(r, "staffID")
+	
+	// Add debug logging
+	if staffID == "debug" {
+		businessID := chi.URLParam(r, "businessID")
+		w.Write([]byte("Debug: GetStaff reached with businessID: " + businessID + " and staffID: " + staffID))
+		return
+	}
+	
 	staff, err := h.uc.GetById(r.Context(), staffID)
 	if err != nil {
 		ErrorResponse(w, http.StatusNotFound, "staff not found")
@@ -160,7 +184,10 @@ func (h *StaffHandler) getStaff(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := h.convertToStaffResponse(staff)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 // @Summary Update staff
@@ -178,7 +205,7 @@ func (h *StaffHandler) getStaff(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security Bearer
 // @Router /api/v1/businesses/{businessID}/staffs/{staffID} [put]
-func (h *StaffHandler) updateStaff(w http.ResponseWriter, r *http.Request) {
+func (h *StaffHandler) UpdateStaff(w http.ResponseWriter, r *http.Request) {
 	staffID := chi.URLParam(r, "staffID")
 
 	staff, err := h.uc.GetById(r.Context(), staffID)
@@ -234,5 +261,8 @@ func (h *StaffHandler) updateStaff(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := h.convertToStaffResponse(staff)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }

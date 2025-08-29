@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
+import { useLocation } from './LocationContext'
 import { staffService } from '@/services/staff'
 import type { Staff } from '@/types/staff'
 
@@ -14,20 +15,29 @@ const StaffDataContext = createContext<StaffDataContextType | undefined>(undefin
 
 export function StaffDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
+  const { currentLocation } = useLocation()
   const [staff, setStaff] = useState<Staff[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const loadStaff = async () => {
-    if (!user?.business_id) {
+    // If no business or location is selected, clear staff data
+    if (!user?.business_id || !currentLocation?.id) {
       setStaff([])
       setLoading(false)
+      // Set appropriate error message when no location is selected
+      if (!currentLocation?.id && user?.business_id) {
+        setError('Пожалуйста, выберите локацию для просмотра сотрудников')
+      } else {
+        setError(null)
+      }
       return
     }
 
     try {
       setLoading(true)
-      const staffData = await staffService.getStaffByBusiness(user.business_id)
+      console.log('Loading staff...', user.business_id, currentLocation.id)
+      const staffData = await staffService.getStaffByBusiness(user.business_id, currentLocation.id)
       // Ensure we always set an array, even if the API returns null
       setStaff(Array.isArray(staffData) ? staffData : [])
       setError(null)
@@ -43,7 +53,7 @@ export function StaffDataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadStaff()
-  }, [user?.business_id])
+  }, [user?.business_id, currentLocation?.id])
 
   const refreshStaff = async () => {
     await loadStaff()

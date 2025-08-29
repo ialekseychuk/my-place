@@ -3,8 +3,15 @@ import type { Service, CreateServiceRequest, UpdateServiceRequest } from '@/type
 class ServiceService {
   private readonly baseURL = '/api/v1'
 
-  async getServicesByBusiness(businessId: string): Promise<Service[]> {
-    const response = await fetch(`${this.baseURL}/businesses/${businessId}/services`, {
+  async getServicesByBusiness(businessId: string, locationId?: string): Promise<Service[]> {
+    // Create URLSearchParams to handle query parameters
+    const params = new URLSearchParams();
+    if (locationId) {
+      params.append('location_id', locationId);
+    }
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+
+    const response = await fetch(`${this.baseURL}/businesses/${businessId}/services${queryString}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
