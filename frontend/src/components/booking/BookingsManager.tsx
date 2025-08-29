@@ -1,5 +1,5 @@
 import { DatePickerDialog } from '@/components/DatePickerDialog'
-import { ScheduleView } from '@/components/shedule/ScheduleView'
+import { ScheduleView } from '@/components/schedule/ScheduleView'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +11,21 @@ import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { Calendar, CalendarDays, Clock, Mail, Table, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+
+// Helper function to format time exactly as it comes from the backend
+const formatTimeFromBackend = (dateString: string): string => {
+  // Extract hours and minutes directly from the ISO string without conversion
+  const date = new Date(dateString);
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+// Helper function to format date from backend
+const formatDateFromBackend = (dateString: string): string => {
+  const date = new Date(dateString);
+  return format(date, 'dd MMMM yyyy', { locale: ru });
+};
 
 interface BookingsManagerProps {
   businessID: string
@@ -62,11 +77,11 @@ export function BookingsManager({ businessID }: BookingsManagerProps) {
   }
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd MMMM yyyy', { locale: ru })
+    return formatDateFromBackend(dateString);
   }
 
   const formatTime = (dateString: string) => {
-    return format(new Date(dateString), 'HH:mm', { locale: ru })
+    return formatTimeFromBackend(dateString);
   }
 
   if (loading) {
@@ -143,10 +158,10 @@ export function BookingsManager({ businessID }: BookingsManagerProps) {
             Карточки
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="schedule">
+        <TabsContent value="schedule" className="mt-4">
           <ScheduleView businessID={businessID} />
         </TabsContent>
-        <TabsContent value="cards">
+        <TabsContent value="cards" className="mt-4">
           {bookingsArray.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">

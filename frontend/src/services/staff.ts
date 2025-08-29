@@ -23,7 +23,8 @@ class StaffService {
     }
 
     const data = await response.json();
-    return data;
+    // Ensure we always return an array, even if the API returns null
+    return Array.isArray(data) ? data : [];
   }
 
   async createStaff(businessId: string, staffData: CreateStaffRequest): Promise<Staff> {

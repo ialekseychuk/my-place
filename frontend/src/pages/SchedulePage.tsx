@@ -1,13 +1,13 @@
 import { CalendarView } from '@/components/CalendarView'
-import { ScheduleTemplatesManager } from '@/components/shedule/ScheduleTemplatesManager'
+import { ScheduleTemplatesManager } from '@/components/schedule/ScheduleTemplatesManager'
 import { ShiftManager } from '@/components/shift/ShiftManager'
 import { TimeOffManager } from '@/components/TimeOffManager'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/AuthContext'
-import { useStaffData } from '@/contexts/StaffDataContext'
 import { useLocation } from '@/contexts/LocationContext'
+import { useStaffData } from '@/contexts/StaffDataContext'
 import type {
     ScheduleStatsResponse,
     ScheduleTemplateResponse,

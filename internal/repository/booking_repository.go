@@ -71,6 +71,7 @@ func (r *bookingRepository) GetByBusinessID(ctx context.Context, businessID stri
 		query = baseQuery + ` ORDER BY b.start_at DESC`
 	}
 
+
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err

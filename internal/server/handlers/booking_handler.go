@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -55,7 +56,7 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.CreateBookingRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		ErrorResponse(w, http.StatusBadRequest, "invalid JSON")
+		ErrorResponse(w, http.StatusBadRequest, fmt.Sprintf("invalid JSON: %v", err))
 		return
 	}
 
@@ -94,6 +95,7 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param businessID path string true "Business ID"
+// @Param location_id query string false "Location id"
 // @Param start_date query string false "Start date in YYYY-MM-DD format"
 // @Param end_date query string false "End date in YYYY-MM-DD format"
 // @Success 200 {array} dto.BookingResponse

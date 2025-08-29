@@ -1,4 +1,4 @@
-import type { Booking } from '@/types/booking';
+import type { Booking, CreateBookingRequest } from '@/types/booking';
 import { apiRequest } from './api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:81'
@@ -59,5 +59,25 @@ export const bookingService = {
     }
     
     return filteredResult;
+  },
+
+  /**
+   * Create a new booking
+   * @param businessID - The business ID
+   * @param bookingData - The booking data to create
+   * @returns Promise with the created booking
+   */
+  createBooking: async (
+    businessID: string,
+    bookingData: CreateBookingRequest
+  ): Promise<Booking> => {
+    const url = `${API_BASE_URL}/api/v1/businesses/${businessID}/bookings`;
+    
+    const result = await apiRequest<Booking>(url, {
+      method: 'POST',
+      body: JSON.stringify(bookingData),
+    });
+    
+    return result;
   }
 }

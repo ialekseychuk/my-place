@@ -912,6 +912,7 @@ func (h *ScheduleHandler) GetWeeklyScheduleView(w http.ResponseWriter, r *http.R
 // @Param businessID path string true "Business ID"
 // @Param year query int true "Year"
 // @Param month query int true "Month (1-12)"
+// @Param location_id query string false "Location id to filter"
 // @Param staff_ids query []string false "Staff IDs to filter"
 // @Success 200 {object} dto.WeeklyScheduleViewResponse
 // @Failure 400 {object} dto.ErrorResponse "Bad request"

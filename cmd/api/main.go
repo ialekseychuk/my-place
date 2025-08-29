@@ -133,7 +133,7 @@ func main() {
 						owner.Mount("/clients", clientHandler.Routes())
 					})
 
-					// Staff accessible routes
+				
 					bir.Group(func(staff chi.Router) {
 						staff.Use(middleware.RequireAnyRole("owner", "staff"))
 						staff.Mount("/bookings", bkh.Routes())
