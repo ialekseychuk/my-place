@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пример виджета бронирования</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .content {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            flex-wrap: wrap; /* Added for better mobile responsiveness */
+        }
+        .info {
+            flex: 1;
+            min-width: 300px; /* Added for better mobile responsiveness */
+        }
+        .widget-container {
+            flex: 1;
+            min-width: 300px; /* Reduced for mobile compatibility */
+            max-width: 400px; /* Added max-width for better appearance */
+            margin: 0 auto; /* Center the widget */
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+        .feature-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .feature-list li {
+            margin-bottom: 10px;
+        }
+        /* Media query for mobile devices */
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            .widget-container {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Добро пожаловать в наш салон красоты</h1>
+            <p>Запишитесь на процедуру онлайн через наш виджет</p>
+        </div>
+        
+        <div class="content">
+            <div class="info">
+                <div class="feature-list">
+                    <h2>О нас</h2>
+                    <p>Наш салон предлагает широкий спектр услуг по уходу за собой:</p>
+                    <ul>
+                        <li>Стрижки и укладки</li>
+                        <li>Окрашивание волос</li>
+                        <li>Маникюр и педикюр</li>
+                        <li>Массаж и SPA процедуры</li>
+                        <li>Косметологические услуги</li>
+                    </ul>
+                    
+                    <h2 style="margin-top: 30px;">Преимущества онлайн-записи</h2>
+                    <ul>
+                        <li>Удобное время записи 24/7</li>
+                        <li>Мгновенное подтверждение</li>
+                        <li>Возможность выбрать любимого специалиста</li>
+                        <li>Напоминания о предстоящей процедуре</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="widget-container">
+                <!-- Widget will be embedded here -->
+                <div id="booking-widget"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script to load the widget -->
+    <script>
+        // In a real implementation, this would load the widget from your server
+        // For demonstration purposes, we're just showing where the widget would be embedded
+        document.getElementById('booking-widget').innerHTML = `
+            <div style="background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 20px; max-width: 400px; margin: 0 auto;">
+                <h3 style="text-align: center; color: #333; margin-top: 0;">Виджет бронирования</h3>
+                <p style="text-align: center; color: #666;">
+                    Здесь будет отображаться виджет бронирования.<br>
+                    В реальной реализации он будет загружаться с вашего сервера.
+                </p>
+                <div style="background: #f0f8ff; padding: 15px; border-radius: 4px; margin-top: 20px;">
+                    <p><strong>Как интегрировать виджет на свой сайт:</strong></p>
+                    <ol>
+                        <li>Добавьте этот скрипт в ваш HTML:</li>
+                        <li><code>&lt;script src="https://yourdomain.com/widget.js"&gt;&lt;/script&gt;</code></li>
+                        <li>Добавьте контейнер для виджета:</li>
+                        <li><code>&lt;div id="booking-widget" 
+                            data-business-id="YOUR_BUSINESS_ID" 
+                            data-location-id="OPTIONAL_LOCATION_ID"&gt;&lt;/div&gt;</code></li>
+                        <li>Если указан <code>data-location-id</code>, виджет сразу откроется на этапе выбора специалиста, пропуская выбор филиала</li>
+                    </ol>
+                </div>
+            </div>
+        `;
+    </script>
+</body>
+</html>

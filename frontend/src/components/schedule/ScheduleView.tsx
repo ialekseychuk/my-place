@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useLocation } from '@/contexts/LocationContext';
 import { bookingService } from '@/services/bookingService';
 import { staffService } from '@/services/staff';
+import { ScheduleService } from '@/services/scheduleService';
 import type { Booking } from '@/types/booking';
 import type { Staff } from '@/types/staff';
 import { format, startOfDay } from 'date-fns';
@@ -80,13 +81,30 @@ export function ScheduleView({ businessID }: ScheduleViewProps) {
       setLoading(true)
       setError(null)
       
-      // Fetch staff members with location filter
-      const staffData = await staffService.getStaffByBusiness(businessID, currentLocation?.id || '')
-      // Ensure staffData is always an array before setting state
-      setStaffMembers(Array.isArray(staffData) ? staffData : [])
+      // Create schedule service instance
+      const scheduleService = new ScheduleService(businessID);
       
       // Format date for API call (YYYY-MM-DD)
       const formattedDate = format(selectedDate, 'yyyy-MM-dd')
+      
+      // Fetch available staff members for the selected date
+      // We're checking availability for a time range that covers a typical workday (9:00-17:00)
+      const availableStaffData = await scheduleService.getAvailableStaff(formattedDate, '09:00', '17:00');
+      
+      // Fetch all staff members to get full staff details
+      const allStaffData = await staffService.getStaffByBusiness(businessID, currentLocation?.id || '');
+      
+      // Filter staff members to only include those who are available
+      const availableStaffIds = availableStaffData
+        .filter(staff => staff.is_available)
+        .map(staff => staff.staff_id);
+      
+      const filteredStaffMembers = allStaffData.filter(staff => 
+        availableStaffIds.includes(staff.id)
+      );
+      
+      // Ensure staffData is always an array before setting state
+      setStaffMembers(Array.isArray(filteredStaffMembers) ? filteredStaffMembers : [])
       
       // Fetch bookings for the selected date with location filter
       const bookingData = await bookingService.getBookings(

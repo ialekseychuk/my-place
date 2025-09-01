@@ -121,6 +121,48 @@ func (r *scheduleRepository) CreateShift(ctx context.Context, shift *domain.Staf
 	return err
 }
 
+func (r *scheduleRepository) GetShiftsByBusiness(ctx context.Context, businessID string, startDate, endDate time.Time) ([]domain.StaffShift, error) {
+	rows, err := r.db.Query(ctx,
+		`SELECT s.id, s.staff_id, s.shift_date, s.start_time, s.end_time, s.break_start_time, s.break_end_time, 
+		        s.is_available, s.is_manually_disabled, s.manual_disable_reason, s.shift_type, s.notes, 
+		        s.created_at, s.updated_at, s.created_by, s.updated_by
+		 FROM staff_shifts s
+		 JOIN staff st ON s.staff_id = st.id
+		 WHERE st.business_id = $1 AND s.shift_date >= $2 AND s.shift_date <= $3
+		 ORDER BY s.shift_date, s.start_time`,
+		businessID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var shifts []domain.StaffShift
+	for rows.Next() {
+		var shift domain.StaffShift
+		var createdBy, updatedBy *string
+
+		err := rows.Scan(&shift.ID, &shift.StaffID, &shift.ShiftDate, &shift.StartTime, &shift.EndTime,
+			&shift.BreakStartTime, &shift.BreakEndTime, &shift.IsAvailable, &shift.IsManuallyDisabled,
+			&shift.ManualDisableReason, &shift.ShiftType, &shift.Notes, &shift.CreatedAt, &shift.UpdatedAt,
+			&createdBy, &updatedBy)
+		if err != nil {
+			return nil, err
+		}
+
+		// Handle nullable fields
+		if createdBy != nil {
+			shift.CreatedBy = *createdBy
+		}
+		if updatedBy != nil {
+			shift.UpdatedBy = *updatedBy
+		}
+
+		shifts = append(shifts, shift)
+	}
+
+	return shifts, nil
+}
+
 // Placeholder implementations for remaining interface methods
 func (r *scheduleRepository) GetScheduleTemplatesByStaff(ctx context.Context, staffID string) ([]domain.ScheduleTemplate, error) {
 	var templates []domain.ScheduleTemplate
@@ -235,10 +277,6 @@ func (r *scheduleRepository) GetShiftsByStaff(ctx context.Context, staffID strin
 	return shifts, nil
 }
 
-func (r *scheduleRepository) GetShiftsByBusiness(ctx context.Context, businessID string, startDate, endDate time.Time) ([]domain.StaffShift, error) {
-	return nil, fmt.Errorf("not implemented yet")
-}
-
 func (r *scheduleRepository) UpdateShift(ctx context.Context, shift *domain.StaffShift) error {
 	return fmt.Errorf("not implemented yet")
 }
@@ -263,8 +301,52 @@ func (r *scheduleRepository) UpdateShiftAvailability(ctx context.Context, shiftI
 	return fmt.Errorf("not implemented yet")
 }
 
-func (r *scheduleRepository) GetAvailableStaff(ctx context.Context, businessID string, date time.Time, startTime, endTime string) ([]domain.Staff, error) {
-	return nil, fmt.Errorf("not implemented yet")
+func (r *scheduleRepository) GetAvailableStaff(ctx context.Context, businessID string, locationID string, date time.Time, startTime, endTime string) ([]domain.Staff, error) {
+	// Build the query with optional location filtering
+	query := `SELECT DISTINCT s.id, s.business_id, s.location_id, s.first_name, s.last_name, 
+		        s.phone, s.gender, s.position, s.description, s.specialization, s.is_active,
+		        s.created_at, s.updated_at
+		 FROM staff s
+		 JOIN staff_shifts sh ON s.id = sh.staff_id
+		 WHERE s.business_id = $1 
+		   AND sh.shift_date = $2
+		   AND sh.is_available = true
+		   AND sh.is_manually_disabled = false
+		   AND (
+		     (sh.start_time <= $3 AND sh.end_time >= $4) OR
+		     (sh.start_time >= $3 AND sh.start_time < $4) OR
+		     (sh.end_time > $3 AND sh.end_time <= $4)
+		   )`
+	
+	args := []interface{}{businessID, date, startTime, endTime}
+	
+	// Add location filter if provided
+	if locationID != "" {
+		query += " AND s.location_id = $5"
+		args = append(args, locationID)
+	}
+	
+	query += " ORDER BY s.last_name, s.first_name"
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var staff []domain.Staff
+	for rows.Next() {
+		var s domain.Staff
+		err := rows.Scan(&s.ID, &s.BusinessID, &s.LocationID, &s.FirstName, &s.LastName,
+			&s.Phone, &s.Gender, &s.Position, &s.Description, &s.Specialization, &s.IsActive,
+			&s.CreatedAt, &s.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		staff = append(staff, s)
+	}
+
+	return staff, nil
 }
 
 func (r *scheduleRepository) CheckStaffAvailability(ctx context.Context, staffID string, date time.Time, startTime, endTime string) (bool, string, error) {

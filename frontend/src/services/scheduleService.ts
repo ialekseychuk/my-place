@@ -413,7 +413,7 @@ export class ScheduleService {
     return apiRequest(`${this.baseUrl}/availability/staff/${staffId}/check?${params.toString()}`)
   }
 
-  async getAvailableStaff(date: string, startTime: string, endTime: string): Promise<{
+  async getAvailableStaff(date: string, startTime: string, endTime: string, locationId?: string): Promise<{
     staff_id: string
     staff_name: string
     is_available: boolean
@@ -422,6 +422,9 @@ export class ScheduleService {
     params.append('date', date)
     params.append('start_time', startTime)
     params.append('end_time', endTime)
+    if (locationId) {
+      params.append('location_id', locationId)
+    }
     
     return apiRequest(`${this.baseUrl}/availability/available-staff?${params.toString()}`)
   }

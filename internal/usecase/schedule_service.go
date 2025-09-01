@@ -621,6 +621,346 @@ func (s *ScheduleService) calculateShiftHours(startTime, endTime, breakStart, br
 }
 
 // =======================
+// Statistics and Availability
+// =======================
+
+func (s *ScheduleService) GetAvailableStaff(ctx context.Context, businessID, locationID string, date time.Time, startTime, endTime string, excludeStaffIDs []string) ([]dto.StaffAvailabilityResponse, error) {
+	// Create a set of excluded staff IDs for efficient lookup
+	excludeMap := make(map[string]bool)
+	for _, id := range excludeStaffIDs {
+		excludeMap[id] = true
+	}
+
+	// If we have specific time parameters, check availability for those times
+	if startTime != "" && endTime != "" {
+		availableStaff, err := s.scheduleRepo.GetAvailableStaff(ctx, businessID, locationID, date, startTime, endTime)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get available staff: %w", err)
+		}
+
+		// Build response with availability information
+		var responses []dto.StaffAvailabilityResponse
+		for _, staff := range availableStaff {
+			// Skip excluded staff
+			if excludeMap[staff.ID] {
+				continue
+			}
+
+			responses = append(responses, dto.StaffAvailabilityResponse{
+				StaffID:     staff.ID,
+				StaffName:   fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
+				Position:    staff.Position,
+				IsAvailable: true,
+			})
+		}
+
+		// If we have location filtering, we also need to get all staff for that location
+		// and mark those without availability as not available
+		allStaff, err := s.staffRepo.ListByBusinessId(ctx, businessID, locationID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get staff list: %w", err)
+		}
+
+		// Create a map of available staff for quick lookup
+		availableMap := make(map[string]bool)
+		for _, staff := range availableStaff {
+			availableMap[staff.ID] = true
+		}
+
+		// Add staff who are not available
+		for _, staff := range allStaff {
+			// Skip excluded staff
+			if excludeMap[staff.ID] {
+				continue
+			}
+
+			// Skip staff who are already in the response
+			if _, exists := availableMap[staff.ID]; exists {
+				continue
+			}
+
+			responses = append(responses, dto.StaffAvailabilityResponse{
+				StaffID:     staff.ID,
+				StaffName:   fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
+				Position:    staff.Position,
+				IsAvailable: false,
+			})
+		}
+
+		return responses, nil
+	}
+
+	// If no specific time parameters, check which staff have shifts on the specified date
+	shifts, err := s.scheduleRepo.GetShiftsByBusiness(ctx, businessID, date, date)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get shifts: %w", err)
+	}
+
+	// Get staff list based on location filtering
+	staffList, err := s.staffRepo.ListByBusinessId(ctx, businessID, locationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get staff list: %w", err)
+	}
+
+	// Create a map of staff with shifts on the date
+	staffWithShifts := make(map[string]bool)
+	for _, shift := range shifts {
+		// Only include staff with available shifts
+		if shift.IsAvailable && !shift.IsManuallyDisabled {
+			staffWithShifts[shift.StaffID] = true
+		}
+	}
+
+	// Build response with shift information
+	var responses []dto.StaffAvailabilityResponse
+	for _, staff := range staffList {
+		// Skip excluded staff
+		if excludeMap[staff.ID] {
+			continue
+		}
+
+		// Check if staff has a shift on the date
+		hasShift := false
+		if _, exists := staffWithShifts[staff.ID]; exists {
+			hasShift = true
+		}
+
+		responses = append(responses, dto.StaffAvailabilityResponse{
+			StaffID:     staff.ID,
+			StaffName:   fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
+			Position:    staff.Position,
+			IsAvailable: hasShift,
+		})
+	}
+
+	return responses, nil
+}
+
+func (s *ScheduleService) GetAvailabilityLogs(ctx context.Context, staffID string, startDate, endDate *time.Time, limit int) ([]dto.AvailabilityLogResponse, error) {
+	// Handle optional date parameters - use default range if not provided
+	var start, end time.Time
+	if startDate != nil {
+		start = *startDate
+	} else {
+		// Default to 30 days ago
+		start = time.Now().AddDate(0, 0, -30)
+	}
+	if endDate != nil {
+		end = *endDate
+	} else {
+		end = time.Now()
+	}
+
+	logs, err := s.scheduleRepo.GetAvailabilityLogs(ctx, staffID, start, end)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get availability logs: %w", err)
+	}
+
+	// Apply limit if specified
+	if limit > 0 && len(logs) > limit {
+		logs = logs[:limit]
+	}
+
+	responses := make([]dto.AvailabilityLogResponse, len(logs))
+	for i, log := range logs {
+		responses[i] = dto.AvailabilityLogResponse{
+			ID:             log.ID,
+			StaffID:        log.StaffID,
+			ShiftID:        log.ShiftID,
+			Action:         log.Action,
+			PreviousStatus: log.PreviousStatus,
+			NewStatus:      log.NewStatus,
+			Reason:         log.Reason,
+			ActionBy:       log.ChangedBy,
+			CreatedAt:      log.ChangedAt,
+		}
+	}
+
+	return responses, nil
+}
+
+func (s *ScheduleService) QuickEnableStaff(ctx context.Context, staffID string, req dto.QuickStaffActionRequest) (int, error) {
+	date, err := time.Parse("2006-01-02", req.Date)
+	if err != nil {
+		return 0, fmt.Errorf("invalid date format: %w", err)
+	}
+
+	shifts, err := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, date, date)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get shifts: %w", err)
+	}
+
+	count := 0
+	for _, shift := range shifts {
+		if !shift.IsAvailable {
+			if err := s.UpdateShiftAvailability(ctx, shift.ID, true, req.Reason, req.ActionBy); err != nil {
+				return count, fmt.Errorf("failed to enable shift %s: %w", shift.ID, err)
+			}
+			count++
+		}
+	}
+
+	return count, nil
+}
+
+func (s *ScheduleService) QuickDisableStaff(ctx context.Context, staffID string, req dto.QuickStaffActionRequest) (int, error) {
+	date, err := time.Parse("2006-01-02", req.Date)
+	if err != nil {
+		return 0, fmt.Errorf("invalid date format: %w", err)
+	}
+
+	shifts, err := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, date, date)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get shifts: %w", err)
+	}
+
+	count := 0
+	for _, shift := range shifts {
+		if shift.IsAvailable {
+			if err := s.UpdateShiftAvailability(ctx, shift.ID, false, req.Reason, req.ActionBy); err != nil {
+				return count, fmt.Errorf("failed to disable shift %s: %w", shift.ID, err)
+			}
+			count++
+		}
+	}
+
+	return count, nil
+}
+
+func (s *ScheduleService) CopySchedule(ctx context.Context, businessID string, req dto.CopyScheduleRequest) (int, error) {
+	sourceStart, err := time.Parse("2006-01-02", req.SourceStartDate)
+	if err != nil {
+		return 0, fmt.Errorf("invalid source start date: %w", err)
+	}
+
+	sourceEnd, err := time.Parse("2006-01-02", req.SourceEndDate)
+	if err != nil {
+		return 0, fmt.Errorf("invalid source end date: %w", err)
+	}
+
+	targetStart, err := time.Parse("2006-01-02", req.TargetStartDate)
+	if err != nil {
+		return 0, fmt.Errorf("invalid target start date: %w", err)
+	}
+
+	copiedCount := 0
+	for _, staffID := range req.StaffIDs {
+		shifts, err := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, sourceStart, sourceEnd)
+		if err != nil {
+			return copiedCount, fmt.Errorf("failed to get source shifts for staff %s: %w", staffID, err)
+		}
+
+		dayOffset := int(targetStart.Sub(sourceStart).Hours() / 24)
+
+		for _, shift := range shifts {
+			newShiftDate := shift.ShiftDate.AddDate(0, 0, dayOffset)
+
+			// Check if target shift already exists
+			existing, _ := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, newShiftDate, newShiftDate)
+			if !req.OverwriteExisting && len(existing) > 0 {
+				continue
+			}
+
+			newShift := &domain.StaffShift{
+				StaffID:        staffID,
+				ShiftDate:      newShiftDate,
+				StartTime:      shift.StartTime,
+				EndTime:        shift.EndTime,
+				BreakStartTime: shift.BreakStartTime,
+				BreakEndTime:   shift.BreakEndTime,
+				IsAvailable:    shift.IsAvailable,
+				ShiftType:      shift.ShiftType,
+				Notes:          shift.Notes,
+				CreatedBy:      req.ActionBy,
+				UpdatedBy:      req.ActionBy,
+			}
+
+			if err := s.scheduleRepo.CreateShift(ctx, newShift); err != nil {
+				return copiedCount, fmt.Errorf("failed to copy shift: %w", err)
+			}
+			copiedCount++
+		}
+	}
+
+	return copiedCount, nil
+}
+
+func (s *ScheduleService) GetStaffScheduleStats(ctx context.Context, staffID string, startDate, endDate time.Time) (*dto.StaffScheduleStatsResponse, error) {
+	staff, err := s.staffRepo.GetById(ctx, staffID)
+	if err != nil {
+		return nil, fmt.Errorf("staff not found: %w", err)
+	}
+
+	shifts, err := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, startDate, endDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get shifts: %w", err)
+	}
+
+	totalHours := 0.0
+	overtimeHours := 0.0
+	for _, shift := range shifts {
+		hours := s.calculateShiftHours(shift.StartTime, shift.EndTime, shift.BreakStartTime, shift.BreakEndTime)
+		totalHours += hours
+		if shift.ShiftType == "overtime" {
+			overtimeHours += hours
+		}
+	}
+
+	timeOffRequests, _ := s.scheduleRepo.GetTimeOffRequestsByStaff(ctx, staffID, startDate, endDate)
+	vacationDays := 0
+	sickDays := 0
+	totalTimeOffDays := len(timeOffRequests)
+
+	for _, timeOff := range timeOffRequests {
+		if timeOff.Status == "approved" {
+			switch timeOff.Type {
+			case "vacation":
+				vacationDays++
+			case "sick_leave":
+				sickDays++
+			}
+		}
+	}
+
+	daysInPeriod := int(endDate.Sub(startDate).Hours()/24) + 1
+	averageHours := 0.0
+	if len(shifts) > 0 {
+		averageHours = totalHours / float64(len(shifts))
+	}
+
+	return &dto.StaffScheduleStatsResponse{
+		StaffID:            staffID,
+		StaffName:          fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
+		PeriodStart:        startDate.Format("2006-01-02"),
+		PeriodEnd:          endDate.Format("2006-01-02"),
+		TotalShifts:        len(shifts),
+		TotalWorkingHours:  totalHours,
+		TotalOvertimeHours: overtimeHours,
+		AverageHoursPerDay: averageHours,
+		TotalTimeOffDays:   totalTimeOffDays,
+		VacationDays:       vacationDays,
+		SickLeaveDays:      sickDays,
+		UtilizationRate:    totalHours / float64(daysInPeriod*8) * 100, // Assuming 8 hour work days
+	}, nil
+}
+
+func (s *ScheduleService) GetBusinessScheduleStats(ctx context.Context, businessID string, startDate, endDate time.Time, includeStaffBreakdown bool) (*dto.BusinessScheduleStatsResponse, error) {
+	// Placeholder implementation - would need to get all business staff
+	return &dto.BusinessScheduleStatsResponse{
+		BusinessID:           businessID,
+		PeriodStart:          startDate.Format("2006-01-02"),
+		PeriodEnd:            endDate.Format("2006-01-02"),
+		TotalStaff:           0,
+		TotalShifts:          0,
+		TotalWorkingHours:    0,
+		TotalOvertimeHours:   0,
+		AverageHoursPerStaff: 0,
+		TotalTimeOffRequests: 0,
+		StaffBreakdown:       []dto.StaffScheduleStatsResponse{},
+	}, nil
+}
+
+// =======================
 // Time Off Management Methods
 // =======================
 
@@ -1037,7 +1377,7 @@ func (s *ScheduleService) GetWeeklyScheduleView(ctx context.Context, businessID,
 	// If no specific staff IDs provided, get all staff for the business
 	if len(staffIDs) == 0 {
 		allStaff, err := s.staffRepo.ListByBusinessId(ctx, businessID, locationID)
-		
+
 		if err != nil {
 			return nil, fmt.Errorf("failed to get staff for business: %w", err)
 		}
@@ -1160,238 +1500,5 @@ func (s *ScheduleService) GetStaffDaySchedule(ctx context.Context, staffID strin
 		IsWorkingDay: len(shifts) > 0,
 		Shifts:       shiftResponses,
 		TotalHours:   totalHours,
-	}, nil
-}
-
-// =======================
-// Statistics and Availability
-// =======================
-
-func (s *ScheduleService) GetAvailableStaff(ctx context.Context, businessID string, date time.Time, startTime, endTime string, excludeStaffIDs []string) ([]dto.StaffAvailabilityResponse, error) {
-	// Placeholder implementation - would need business staff repository
-	return []dto.StaffAvailabilityResponse{}, nil
-}
-
-func (s *ScheduleService) GetAvailabilityLogs(ctx context.Context, staffID string, startDate, endDate *time.Time, limit int) ([]dto.AvailabilityLogResponse, error) {
-	// Handle optional date parameters - use default range if not provided
-	var start, end time.Time
-	if startDate != nil {
-		start = *startDate
-	} else {
-		// Default to 30 days ago
-		start = time.Now().AddDate(0, 0, -30)
-	}
-	if endDate != nil {
-		end = *endDate
-	} else {
-		end = time.Now()
-	}
-
-	logs, err := s.scheduleRepo.GetAvailabilityLogs(ctx, staffID, start, end)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get availability logs: %w", err)
-	}
-
-	// Apply limit if specified
-	if limit > 0 && len(logs) > limit {
-		logs = logs[:limit]
-	}
-
-	responses := make([]dto.AvailabilityLogResponse, len(logs))
-	for i, log := range logs {
-		responses[i] = dto.AvailabilityLogResponse{
-			ID:             log.ID,
-			StaffID:        log.StaffID,
-			ShiftID:        log.ShiftID,
-			Action:         log.Action,
-			PreviousStatus: log.PreviousStatus,
-			NewStatus:      log.NewStatus,
-			Reason:         log.Reason,
-			ActionBy:       log.ChangedBy,
-			CreatedAt:      log.ChangedAt,
-		}
-	}
-
-	return responses, nil
-}
-
-func (s *ScheduleService) QuickEnableStaff(ctx context.Context, staffID string, req dto.QuickStaffActionRequest) (int, error) {
-	date, err := time.Parse("2006-01-02", req.Date)
-	if err != nil {
-		return 0, fmt.Errorf("invalid date format: %w", err)
-	}
-
-	shifts, err := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, date, date)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get shifts: %w", err)
-	}
-
-	count := 0
-	for _, shift := range shifts {
-		if !shift.IsAvailable {
-			if err := s.UpdateShiftAvailability(ctx, shift.ID, true, req.Reason, req.ActionBy); err != nil {
-				return count, fmt.Errorf("failed to enable shift %s: %w", shift.ID, err)
-			}
-			count++
-		}
-	}
-
-	return count, nil
-}
-
-func (s *ScheduleService) QuickDisableStaff(ctx context.Context, staffID string, req dto.QuickStaffActionRequest) (int, error) {
-	date, err := time.Parse("2006-01-02", req.Date)
-	if err != nil {
-		return 0, fmt.Errorf("invalid date format: %w", err)
-	}
-
-	shifts, err := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, date, date)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get shifts: %w", err)
-	}
-
-	count := 0
-	for _, shift := range shifts {
-		if shift.IsAvailable {
-			if err := s.UpdateShiftAvailability(ctx, shift.ID, false, req.Reason, req.ActionBy); err != nil {
-				return count, fmt.Errorf("failed to disable shift %s: %w", shift.ID, err)
-			}
-			count++
-		}
-	}
-
-	return count, nil
-}
-
-func (s *ScheduleService) CopySchedule(ctx context.Context, businessID string, req dto.CopyScheduleRequest) (int, error) {
-	sourceStart, err := time.Parse("2006-01-02", req.SourceStartDate)
-	if err != nil {
-		return 0, fmt.Errorf("invalid source start date: %w", err)
-	}
-
-	sourceEnd, err := time.Parse("2006-01-02", req.SourceEndDate)
-	if err != nil {
-		return 0, fmt.Errorf("invalid source end date: %w", err)
-	}
-
-	targetStart, err := time.Parse("2006-01-02", req.TargetStartDate)
-	if err != nil {
-		return 0, fmt.Errorf("invalid target start date: %w", err)
-	}
-
-	copiedCount := 0
-	for _, staffID := range req.StaffIDs {
-		shifts, err := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, sourceStart, sourceEnd)
-		if err != nil {
-			return copiedCount, fmt.Errorf("failed to get source shifts for staff %s: %w", staffID, err)
-		}
-
-		dayOffset := int(targetStart.Sub(sourceStart).Hours() / 24)
-
-		for _, shift := range shifts {
-			newShiftDate := shift.ShiftDate.AddDate(0, 0, dayOffset)
-
-			// Check if target shift already exists
-			existing, _ := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, newShiftDate, newShiftDate)
-			if !req.OverwriteExisting && len(existing) > 0 {
-				continue
-			}
-
-			newShift := &domain.StaffShift{
-				StaffID:        staffID,
-				ShiftDate:      newShiftDate,
-				StartTime:      shift.StartTime,
-				EndTime:        shift.EndTime,
-				BreakStartTime: shift.BreakStartTime,
-				BreakEndTime:   shift.BreakEndTime,
-				IsAvailable:    shift.IsAvailable,
-				ShiftType:      shift.ShiftType,
-				Notes:          shift.Notes,
-				CreatedBy:      req.ActionBy,
-				UpdatedBy:      req.ActionBy,
-			}
-
-			if err := s.scheduleRepo.CreateShift(ctx, newShift); err != nil {
-				return copiedCount, fmt.Errorf("failed to copy shift: %w", err)
-			}
-			copiedCount++
-		}
-	}
-
-	return copiedCount, nil
-}
-
-func (s *ScheduleService) GetStaffScheduleStats(ctx context.Context, staffID string, startDate, endDate time.Time) (*dto.StaffScheduleStatsResponse, error) {
-	staff, err := s.staffRepo.GetById(ctx, staffID)
-	if err != nil {
-		return nil, fmt.Errorf("staff not found: %w", err)
-	}
-
-	shifts, err := s.scheduleRepo.GetShiftsByStaff(ctx, staffID, startDate, endDate)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get shifts: %w", err)
-	}
-
-	totalHours := 0.0
-	overtimeHours := 0.0
-	for _, shift := range shifts {
-		hours := s.calculateShiftHours(shift.StartTime, shift.EndTime, shift.BreakStartTime, shift.BreakEndTime)
-		totalHours += hours
-		if shift.ShiftType == "overtime" {
-			overtimeHours += hours
-		}
-	}
-
-	timeOffRequests, _ := s.scheduleRepo.GetTimeOffRequestsByStaff(ctx, staffID, startDate, endDate)
-	vacationDays := 0
-	sickDays := 0
-	totalTimeOffDays := len(timeOffRequests)
-
-	for _, timeOff := range timeOffRequests {
-		if timeOff.Status == "approved" {
-			switch timeOff.Type {
-			case "vacation":
-				vacationDays++
-			case "sick_leave":
-				sickDays++
-			}
-		}
-	}
-
-	daysInPeriod := int(endDate.Sub(startDate).Hours()/24) + 1
-	averageHours := 0.0
-	if len(shifts) > 0 {
-		averageHours = totalHours / float64(len(shifts))
-	}
-
-	return &dto.StaffScheduleStatsResponse{
-		StaffID:            staffID,
-		StaffName:          fmt.Sprintf("%s %s", staff.FirstName, staff.LastName),
-		PeriodStart:        startDate.Format("2006-01-02"),
-		PeriodEnd:          endDate.Format("2006-01-02"),
-		TotalShifts:        len(shifts),
-		TotalWorkingHours:  totalHours,
-		TotalOvertimeHours: overtimeHours,
-		AverageHoursPerDay: averageHours,
-		TotalTimeOffDays:   totalTimeOffDays,
-		VacationDays:       vacationDays,
-		SickLeaveDays:      sickDays,
-		UtilizationRate:    totalHours / float64(daysInPeriod*8) * 100, // Assuming 8 hour work days
-	}, nil
-}
-
-func (s *ScheduleService) GetBusinessScheduleStats(ctx context.Context, businessID string, startDate, endDate time.Time, includeStaffBreakdown bool) (*dto.BusinessScheduleStatsResponse, error) {
-	// Placeholder implementation - would need to get all business staff
-	return &dto.BusinessScheduleStatsResponse{
-		BusinessID:           businessID,
-		PeriodStart:          startDate.Format("2006-01-02"),
-		PeriodEnd:            endDate.Format("2006-01-02"),
-		TotalStaff:           0,
-		TotalShifts:          0,
-		TotalWorkingHours:    0,
-		TotalOvertimeHours:   0,
-		AverageHoursPerStaff: 0,
-		TotalTimeOffRequests: 0,
-		StaffBreakdown:       []dto.StaffScheduleStatsResponse{},
 	}, nil
 }

@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"time"
-
 )
 
 // ScheduleRepository интерфейс для работы с расписанием сотрудников
@@ -29,7 +28,7 @@ type ScheduleRepository interface {
 
 	// Availability Management
 	UpdateShiftAvailability(ctx context.Context, shiftID string, isAvailable bool, reason, updatedBy string) error
-	GetAvailableStaff(ctx context.Context, businessID string, date time.Time, startTime, endTime string) ([]Staff, error)
+	GetAvailableStaff(ctx context.Context, businessID string, locationID string, date time.Time, startTime, endTime string) ([]Staff, error)
 	CheckStaffAvailability(ctx context.Context, staffID string, date time.Time, startTime, endTime string) (bool, string, error)
 
 	// Time Off Management

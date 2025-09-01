@@ -19,6 +19,7 @@ import { ServicesPage } from '@/pages/ServicesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { StaffPage } from '@/pages/StaffPage'
 import { StaffServicePage } from '@/pages/StaffServicePage'
+import { WidgetPage } from '@/pages/WidgetPage'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 
@@ -47,6 +48,7 @@ function App() {
                       {/* Public routes */}
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/register" element={<BusinessRegistration />} />
+                      <Route path="/widget" element={<WidgetPage />} />
                       
                       {/* Protected routes (with layout) */}
                       <Route path="/" element={

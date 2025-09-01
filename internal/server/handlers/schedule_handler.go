@@ -1276,8 +1276,9 @@ func (h *ScheduleHandler) GetBusinessTimeOffRequests(w http.ResponseWriter, r *h
 // @Produce json
 // @Param businessID path string true "Business ID"
 // @Param date query string true "Date (YYYY-MM-DD)"
-// @Param start_time query string true "Start time (HH:MM)"
-// @Param end_time query string true "End time (HH:MM)"
+// @Param start_time query string false "Start time (HH:MM)" 
+// @Param end_time query string false "End time (HH:MM)"
+// @Param location_id query string false "Location ID"
 // @Param exclude_staff_ids query []string false "Staff IDs to exclude"
 // @Success 200 {array} dto.StaffAvailabilityResponse
 // @Failure 400 {object} dto.ErrorResponse "Bad request"
@@ -1292,11 +1293,13 @@ func (h *ScheduleHandler) GetAvailableStaff(w http.ResponseWriter, r *http.Reque
 	}
 
 	dateStr := r.URL.Query().Get("date")
+	// Make start_time and end_time optional
 	startTime := r.URL.Query().Get("start_time")
 	endTime := r.URL.Query().Get("end_time")
+	locationID := r.URL.Query().Get("location_id")
 
-	if dateStr == "" || startTime == "" || endTime == "" {
-		ErrorResponse(w, http.StatusBadRequest, "date, start_time, and end_time parameters are required")
+	if dateStr == "" {
+		ErrorResponse(w, http.StatusBadRequest, "date parameter is required")
 		return
 	}
 
@@ -1308,7 +1311,7 @@ func (h *ScheduleHandler) GetAvailableStaff(w http.ResponseWriter, r *http.Reque
 
 	excludeStaffIDs := r.URL.Query()["exclude_staff_ids"]
 
-	availableStaff, err := h.scheduleService.GetAvailableStaff(r.Context(), businessID, date, startTime, endTime, excludeStaffIDs)
+	availableStaff, err := h.scheduleService.GetAvailableStaff(r.Context(), businessID, locationID, date, startTime, endTime, excludeStaffIDs)
 	if err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return

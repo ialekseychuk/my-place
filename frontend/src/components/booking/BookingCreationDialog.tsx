@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PhoneInput } from '@/components/ui/phone-input'
 import {
   Select,
   SelectContent,
@@ -20,9 +21,12 @@ import { useToast } from '@/hooks/use-toast'
 import { bookingService } from '@/services/bookingService'
 import { serviceService } from '@/services/service'
 import { staffService } from '@/services/staff'
+import { staffServiceService } from '@/services/staff-service'
+import { ScheduleService } from '@/services/scheduleService'
 import type { CreateBookingRequest } from '@/types/booking'
 import type { Service } from '@/types/service'
 import type { Staff } from '@/types/staff'
+import type { StaffServiceAssignment } from '@/types/staff-service'
 import { useEffect, useState } from 'react'
 
 interface BookingCreationDialogProps {
@@ -43,6 +47,9 @@ export function BookingCreationDialog({
   const { toast } = useToast()
   const [services, setServices] = useState<Service[]>([])
   const [staffs, setStaffs] = useState<Staff[]>([])
+  const [allServices, setAllServices] = useState<Service[]>([])
+  const [allStaffs, setAllStaffs] = useState<Staff[]>([])
+  const [staffServiceAssignments, setStaffServiceAssignments] = useState<StaffServiceAssignment[]>([])
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<CreateBookingRequest>({
     service_id: '',
@@ -75,10 +82,17 @@ export function BookingCreationDialog({
   const fetchServicesAndStaff = async () => {
     try {
       setLoading(true)
-      const [servicesData, staffsData] = await Promise.all([
+      const [servicesData, staffsData, staffServiceData] = await Promise.all([
         serviceService.getServicesByBusiness(businessID, locationID),
         staffService.getStaffByBusiness(businessID, locationID || ''),
+        staffServiceService.getAllStaffServices(businessID),
       ])
+      
+      setAllServices(servicesData)
+      setAllStaffs(staffsData)
+      setStaffServiceAssignments(staffServiceData)
+      
+      // Initially show all services and staff
       setServices(servicesData)
       setStaffs(staffsData)
     } catch (error) {
@@ -91,6 +105,48 @@ export function BookingCreationDialog({
     } finally {
       setLoading(false)
     }
+  }
+
+  // Filter services based on selected staff
+  const filterServicesByStaff = (staffId: string) => {
+    if (!staffId) {
+      // If no staff selected, show all services
+      setServices(allServices);
+      return;
+    }
+    
+    // Find service IDs assigned to this staff member
+    const serviceIds = staffServiceAssignments
+      .filter(assignment => assignment.staff_id === staffId)
+      .map(assignment => assignment.service_id);
+    
+    // Filter services to only those this staff member can provide
+    const filteredServices = allServices.filter(service => 
+      serviceIds.includes(service.id)
+    );
+    
+    setServices(filteredServices);
+  }
+
+  // Filter staff based on selected service
+  const filterStaffByService = (serviceId: string) => {
+    if (!serviceId) {
+      // If no service selected, show all staff
+      setStaffs(allStaffs);
+      return;
+    }
+    
+    // Find staff IDs assigned to this service
+    const staffIds = staffServiceAssignments
+      .filter(assignment => assignment.service_id === serviceId)
+      .map(assignment => assignment.staff_id);
+    
+    // Filter staff to only those who can provide this service
+    const filteredStaff = allStaffs.filter(staff => 
+      staffIds.includes(staff.id)
+    );
+    
+    setStaffs(filteredStaff);
   }
 
   const validateForm = () => {
@@ -148,12 +204,57 @@ export function BookingCreationDialog({
     }
   }
 
-  const handleDateChange = (date: string, time: string) => {
-    if (date && time) {
-      const dateTimeString = `${date}T${time}:00`
-      setFormData({ ...formData, start_at: dateTimeString })
+  const handleDateChange = async (date: string, time: string) => {
+    if (date) {
+      let dateTimeString = formData.start_at;
+      if (time) {
+        dateTimeString = `${date}T${time}:00`;
+        setFormData({ ...formData, start_at: dateTimeString });
+      } else if (!formData.start_at) {
+        // If no time provided and no existing datetime, set to beginning of day
+        dateTimeString = `${date}T00:00:00`;
+        setFormData({ ...formData, start_at: dateTimeString });
+      }
+      
       if (errors.start_at) {
-        setErrors({ ...errors, start_at: '' })
+        setErrors({ ...errors, start_at: '' });
+      }
+      
+      // Filter staff by shift date
+      try {
+        const scheduleService = new ScheduleService(businessID);
+        // Get available staff for the selected date
+        // If time is selected, use it for more precise filtering
+        // Otherwise, just check if staff have shifts on that date
+        let availableStaff;
+        if (time) {
+          availableStaff = await scheduleService.getAvailableStaff(date, time, time, locationID);
+        } else {
+          // For date-only filtering, we'll use a broad time range to check availability
+          availableStaff = await scheduleService.getAvailableStaff(date, '00:00', '23:59', locationID);
+        }
+        
+        // Filter allStaffs to only include staff who are available on the selected date
+        const staffOnShift = allStaffs.filter(staff => 
+          availableStaff.some(available => available.staff_id === staff.id && available.is_available)
+        );
+        
+        // Update the staff list
+        setStaffs(staffOnShift);
+        
+        // If the currently selected staff is not available on the new date, reset the selection
+        if (formData.staff_id && !staffOnShift.some(staff => staff.id === formData.staff_id)) {
+          setFormData(prev => ({ ...prev, staff_id: '' }));
+          
+          // Also reset service if it was tied to the staff member
+          if (formData.service_id) {
+            setFormData(prev => ({ ...prev, service_id: '' }));
+          }
+        }
+      } catch (error) {
+        console.error('Error filtering staff by date:', error);
+        // If there's an error, show all staff
+        setStaffs(allStaffs);
       }
     }
   }
@@ -186,14 +287,30 @@ export function BookingCreationDialog({
             <Select
               value={formData.service_id}
               onValueChange={(value) => {
-                setFormData({ ...formData, service_id: value })
-                if (errors.service_id) setErrors({ ...errors, service_id: '' })
+                // If the "reset" value is selected, reset to empty string
+                const serviceId = value === "reset" ? "" : value;
+                
+                setFormData({ ...formData, service_id: serviceId });
+                // When service changes, filter staff who can provide this service
+                filterStaffByService(serviceId);
+                if (errors.service_id) setErrors({ ...errors, service_id: '' });
+                
+                // If current staff cannot provide this service, reset staff selection
+                if (formData.staff_id && serviceId) {
+                  const staffCanProvideService = staffServiceAssignments.some(
+                    assignment => assignment.staff_id === formData.staff_id && assignment.service_id === serviceId
+                  );
+                  if (!staffCanProvideService) {
+                    setFormData(prev => ({ ...prev, staff_id: '' }));
+                  }
+                }
               }}
             >
               <SelectTrigger id="service" className={errors.service_id ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Выберите услугу" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="reset">Выбрать услугу</SelectItem>
                 {services.map((service) => (
                   <SelectItem key={service.id} value={service.id}>
                     {service.name} ({service.duration_min} мин)
@@ -209,14 +326,30 @@ export function BookingCreationDialog({
             <Select
               value={formData.staff_id}
               onValueChange={(value) => {
-                setFormData({ ...formData, staff_id: value })
-                if (errors.staff_id) setErrors({ ...errors, staff_id: '' })
+                // If the "reset" value is selected, reset to empty string
+                const staffId = value === "reset" ? "" : value;
+                
+                setFormData({ ...formData, staff_id: staffId });
+                // When staff changes, filter services this staff can provide
+                filterServicesByStaff(staffId);
+                if (errors.staff_id) setErrors({ ...errors, staff_id: '' });
+                
+                // If current service cannot be provided by this staff, reset service selection
+                if (formData.service_id && staffId) {
+                  const staffCanProvideService = staffServiceAssignments.some(
+                    assignment => assignment.staff_id === staffId && assignment.service_id === formData.service_id
+                  );
+                  if (!staffCanProvideService) {
+                    setFormData(prev => ({ ...prev, service_id: '' }));
+                  }
+                }
               }}
             >
               <SelectTrigger id="staff" className={errors.staff_id ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="reset">Выбрать сотрудника</SelectItem>
                 {staffs.map((staff) => (
                   <SelectItem key={staff.id} value={staff.id}>
                     {staff.full_name} ({staff.position})
@@ -274,15 +407,15 @@ export function BookingCreationDialog({
           
           <div className="space-y-2">
             <Label htmlFor="customer_phone">Телефон клиента</Label>
-            <Input
-              id="customer_phone"
+            <PhoneInput
               value={formData.customer_phone}
-              onChange={(e) => {
-                setFormData({ ...formData, customer_phone: e.target.value })
+              onChange={(value) => {
+                setFormData({ ...formData, customer_phone: value })
                 if (errors.customer_phone) setErrors({ ...errors, customer_phone: '' })
               }}
               className={errors.customer_phone ? 'border-red-500' : ''}
-              placeholder="Введите номер телефона"
+              placeholder="+7 (999) 123-45-67"
+              defaultCountry="ru"
             />
             {errors.customer_phone && <p className="text-sm text-red-500">{errors.customer_phone}</p>}
           </div>
