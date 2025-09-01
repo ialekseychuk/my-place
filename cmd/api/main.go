@@ -55,7 +55,7 @@ func main() {
 
 	ucService := usecase.NewServiceUseCase(serviceRepo)
 	ucStaff := usecase.NewStaffUseCase(staffRepo, staffServiceRepo, serviceRepo)
-	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo, clientRepo) 
+	ucBooking := usecase.NewBookingService(bookingRepo, serviceRepo, staffRepo, clientRepo)
 	scheduleService := usecase.NewScheduleService(scheduleRepo, staffRepo)
 	clientService := usecase.NewClientService(clientRepo)
 	locationService := usecase.NewLocationService(locationRepo)
@@ -71,7 +71,8 @@ func main() {
 	bkh := handlers.NewBookingHandler(ucBooking)
 	scheduleHandler := handlers.NewScheduleHandler(scheduleService)
 	clientHandler := handlers.NewClientHandler(clientService)
-	locationHandler := handlers.NewLocationHandler(locationService) 
+	locationHandler := handlers.NewLocationHandler(locationService)
+	widgetHandler := handlers.NewWidgetHandler(locationService, ucService, ucStaff, scheduleService) // Add widget handler
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger(logger))
@@ -103,6 +104,9 @@ func main() {
 		v1.Post("/businesses/register", bh.RegisterBusiness)
 		v1.Mount("/auth", authHandler.Routes())
 
+		// Public widget routes - no authentication required
+		v1.Mount("/widget", widgetHandler.Routes())
+
 		// Protected routes
 		v1.Group(func(protected chi.Router) {
 			protected.Use(jwtMiddleware)
@@ -133,7 +137,6 @@ func main() {
 						owner.Mount("/clients", clientHandler.Routes())
 					})
 
-				
 					bir.Group(func(staff chi.Router) {
 						staff.Use(middleware.RequireAnyRole("owner", "staff"))
 						staff.Mount("/bookings", bkh.Routes())

@@ -96,25 +96,25 @@ func (r *scheduleRepository) CreateShift(ctx context.Context, shift *domain.Staf
 	shift.UpdatedAt = time.Now()
 
 	args := []interface{}{
-		shift.StaffID, 
-		shift.ShiftDate, 
-		shift.StartTime, 
-		shift.EndTime, 
+		shift.StaffID,
+		shift.ShiftDate,
+		shift.StartTime,
+		shift.EndTime,
 		shift.BreakStartTime,
-		shift.BreakEndTime, 
-		shift.IsAvailable, 
-		shift.IsManuallyDisabled, 
+		shift.BreakEndTime,
+		shift.IsAvailable,
+		shift.IsManuallyDisabled,
 		shift.ManualDisableReason,
-		shift.ShiftType, 
-		shift.Notes, 
-		shift.UpdatedAt, 
-		shift.CreatedBy, 
+		shift.ShiftType,
+		shift.Notes,
+		shift.UpdatedAt,
+		shift.CreatedBy,
 		shift.UpdatedBy,
 	}
 
-	err := r.db.QueryRow(ctx,sql, args...).Scan(&shift.ID, &shift.CreatedAt, &shift.UpdatedAt)
+	err := r.db.QueryRow(ctx, sql, args...).Scan(&shift.ID, &shift.CreatedAt, &shift.UpdatedAt)
 	if err != nil {
-		t:= rawsql.BuildSQL(sql, args)
+		t := rawsql.BuildSQL(sql, args)
 		fmt.Println(t)
 	}
 
@@ -317,15 +317,15 @@ func (r *scheduleRepository) GetAvailableStaff(ctx context.Context, businessID s
 		     (sh.start_time >= $3 AND sh.start_time < $4) OR
 		     (sh.end_time > $3 AND sh.end_time <= $4)
 		   )`
-	
+
 	args := []interface{}{businessID, date, startTime, endTime}
-	
+
 	// Add location filter if provided
 	if locationID != "" {
 		query += " AND s.location_id = $5"
 		args = append(args, locationID)
 	}
-	
+
 	query += " ORDER BY s.last_name, s.first_name"
 
 	rows, err := r.db.Query(ctx, query, args...)

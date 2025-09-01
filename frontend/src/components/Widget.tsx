@@ -3,11 +3,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { useToast } from '@/hooks/use-toast'
-import { bookingService } from '@/services/bookingService'
-import { locationService } from '@/services/location'
-import { serviceService } from '@/services/service'
-import { staffService } from '@/services/staff'
-import { staffServiceService } from '@/services/staff-service'
+import { ScheduleService } from '@/services/scheduleService'
+import { widgetService } from '@/services/widgetService'
 import type { CreateBookingRequest } from '@/types/booking'
 import type { Location } from '@/types/location'
 import type { Service } from '@/types/service'
@@ -17,6 +14,7 @@ import { addDays, addMonths, format, getDay, isToday, startOfMonth } from 'date-
 import { ru } from 'date-fns/locale'
 import { ArrowLeft, Building, Calendar, ChevronLeft, ChevronRight, Scissors, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
 interface WidgetProps {
   businessId: string
@@ -152,8 +150,9 @@ const mockAssignments: StaffServiceAssignment[] = [
   }
 ]
 
-export function Widget({ businessId, locationId, businessName = 'Мой Салон', businessAddress = 'ул. Примерная, д.1' }: WidgetProps) {
+export function Widget({ businessId, locationId: propLocationId, businessName = 'Мой Салон', businessAddress = 'ул. Примерная, д.1' }: WidgetProps) {
   const { toast } = useToast()
+  const location = useLocation()
   const [services, setServices] = useState<Service[]>([])
   const [staffs, setStaffs] = useState<Staff[]>([])
   const [allServices, setAllServices] = useState<Service[]>([])
@@ -164,7 +163,7 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
   
   // Locations
   const [locations, setLocations] = useState<Location[]>([])
-  const [selectedLocationId, setSelectedLocationId] = useState<string>(locationId || '')
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('')
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   
   // Selected values
@@ -178,7 +177,7 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
   const [customerPhone, setCustomerPhone] = useState<string>('')
   
   // UI State
-  const [currentStep, setCurrentStep] = useState<Step>(locationId ? 'selection' : 'location')
+  const [currentStep, setCurrentStep] = useState<Step>('location')
   const [availableDates, setAvailableDates] = useState<string[]>([])
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -188,27 +187,44 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
   // Search
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Parse URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    const urlLocationId = urlParams.get('location_id')
+    
+    // Use URL location_id, then prop locationId, then empty string
+    const initialLocationId = urlLocationId || propLocationId || ''
+    setSelectedLocationId(initialLocationId)
+    
+    // If we have a location ID, skip to selection step
+    if (initialLocationId) {
+      setCurrentStep('selection')
+    }
+  }, [location.search, propLocationId])
+
   // Fetch locations
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const locationsData = await locationService.getLocations(businessId)
+        const locationsData = await widgetService.getLocations(businessId)
         setLocations(locationsData)
         
-        // If we only have one location, auto-select it
-        if (locationsData.length === 1) {
-          setSelectedLocationId(locationsData[0].id)
-          setSelectedLocation(locationsData[0])
-          setCurrentStep('selection')
-        }
-        // If locationId is provided, find and set that location
-        else if (locationId) {
-          const location = locationsData.find(loc => loc.id === locationId)
+        // Check if we have a selected location ID
+        if (selectedLocationId) {
+          // Find and set the selected location
+          const location = locationsData.find(loc => loc.id === selectedLocationId)
           if (location) {
-            setSelectedLocationId(locationId)
             setSelectedLocation(location)
             setCurrentStep('selection')
           }
+        } else if (locationsData.length === 1) {
+          // If we only have one location, auto-select it
+          setSelectedLocationId(locationsData[0].id)
+          setSelectedLocation(locationsData[0])
+          setCurrentStep('selection')
+        } else {
+          // Multiple locations and no selection, stay on location step
+          setCurrentStep('location')
         }
       } catch (error) {
         console.error('Error fetching locations:', error)
@@ -225,6 +241,8 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
           setSelectedLocationId(mockLocations[0].id)
           setSelectedLocation(mockLocations[0])
           setCurrentStep('selection')
+        } else {
+          setCurrentStep('location')
         }
       }
     }
@@ -232,7 +250,7 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
     if (businessId) {
       fetchLocations()
     }
-  }, [businessId, locationId])
+  }, [businessId, selectedLocationId])
 
   // Generate available dates (current month and next month)
   useEffect(() => {
@@ -252,45 +270,175 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
 
   // Generate available times based on staff availability
   useEffect(() => {
-    // In a real app, this would come from the backend based on staff availability
-    // For now, we'll generate sample times
-    const generateTimesForStaff = (staffId: string, date: string) => {
-      const times = []
-      // Different available times for different staff members (for demo purposes)
-      if (staffId && date) {
-        const dayOfWeek = new Date(date).getDay()
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-        
-        // Morning shift (9:00 - 13:00)
-        if (!isWeekend || Math.random() > 0.5) {
-          for (let hour = 9; hour <= 13; hour++) {
-            for (let minute of [0, 30]) {
-              // Randomly skip some slots to simulate unavailability
-              if (Math.random() > 0.3) {
-                times.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`)
-              }
+    const fetchAvailableTimes = async () => {
+      // Only fetch if we have a date selected
+      if (!selectedDate || !selectedLocationId) {
+        setAvailableTimes([])
+        return
+      }
+      
+      try {
+        // If we have a staff member selected, get their specific availability
+        if (selectedStaff) {
+          const availableStaff = await widgetService.getAvailableStaff(
+            businessId, 
+            selectedDate, 
+            undefined, 
+            undefined, 
+            selectedLocationId
+          )
+          
+          // Check if the selected staff is available on this date
+          const staffAvailability = availableStaff.find(s => s.staff_id === selectedStaff)
+          if (staffAvailability && staffAvailability.is_available) {
+            // Get staff schedule to generate times
+            const scheduleService = new ScheduleService(businessId)
+            const staffSchedule = await scheduleService.getStaffDaySchedule(selectedStaff, selectedDate)
+            const times = generateTimesFromSchedule(staffSchedule)
+            setAvailableTimes(times)
+          } else {
+            setAvailableTimes([])
+          }
+        } 
+        // If we have a service selected but no staff, get availability for all staff who can provide the service
+        else if (selectedService) {
+          // Find all staff who can provide this service
+          const staffIds = staffServiceAssignments
+            .filter(assignment => assignment.service_id === selectedService)
+            .map(assignment => assignment.staff_id)
+          
+          if (staffIds.length > 0) {
+            // Get available staff for this date
+            const availableStaff = await widgetService.getAvailableStaff(
+              businessId, 
+              selectedDate, 
+              undefined, 
+              undefined, 
+              selectedLocationId
+            )
+            
+            // Filter to only staff who can provide the service and are available
+            const availableStaffIds = availableStaff
+              .filter(s => s.is_available && staffIds.includes(s.staff_id))
+              .map(s => s.staff_id)
+            
+            if (availableStaffIds.length > 0) {
+              // Get schedules for all relevant staff
+              const scheduleService = new ScheduleService(businessId)
+              const schedules = await Promise.all(
+                availableStaffIds.map(staffId => scheduleService.getStaffDaySchedule(staffId, selectedDate))
+              )
+              
+              // Combine all available times
+              const allTimes = schedules.flatMap(schedule => generateTimesFromSchedule(schedule))
+              // Remove duplicates and sort
+              const uniqueTimes = [...new Set(allTimes)].sort()
+              setAvailableTimes(uniqueTimes)
+            } else {
+              setAvailableTimes([])
             }
+          } else {
+            setAvailableTimes([])
+          }
+        } 
+        // If neither staff nor service selected, get availability for all staff
+        else {
+          // Get available staff for this date
+          const availableStaff = await widgetService.getAvailableStaff(
+            businessId, 
+            selectedDate, 
+            undefined, 
+            undefined, 
+            selectedLocationId
+          )
+          
+          // Filter to only staff who are available
+          const availableStaffIds = availableStaff
+            .filter(s => s.is_available)
+            .map(s => s.staff_id)
+          
+          if (availableStaffIds.length > 0) {
+            // Get schedules for all available staff
+            const scheduleService = new ScheduleService(businessId)
+            const schedules = await Promise.all(
+              availableStaffIds.map(staffId => scheduleService.getStaffDaySchedule(staffId, selectedDate))
+            )
+            
+            // Combine all available times
+            const allTimes = schedules.flatMap(schedule => generateTimesFromSchedule(schedule))
+            // Remove duplicates and sort
+            const uniqueTimes = [...new Set(allTimes)].sort()
+            setAvailableTimes(uniqueTimes)
+          } else {
+            setAvailableTimes([])
           }
         }
-        
-        // Evening shift (15:00 - 21:00)
-        if (!isWeekend || Math.random() > 0.3) {
-          for (let hour = 15; hour <= 21; hour++) {
-            for (let minute of [0, 30]) {
-              if (hour === 21 && minute === 30) continue // Skip 21:30
-              // Randomly skip some slots to simulate unavailability
-              if (Math.random() > 0.3) {
-                times.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`)
-              }
+      } catch (error) {
+        console.error('Error fetching available times:', error)
+        // Fallback to generated times
+        const generatedTimes = generateTimesForStaff(selectedStaff, selectedDate)
+        setAvailableTimes(generatedTimes)
+      }
+    }
+    
+    fetchAvailableTimes()
+  }, [selectedStaff, selectedService, selectedDate, selectedLocationId, businessId, staffServiceAssignments])
+
+  // Helper function to generate times from a staff schedule
+  const generateTimesFromSchedule = (schedule: any) => {
+    const times: string[] = []
+    if (schedule && schedule.shifts && schedule.shifts.length > 0) {
+      schedule.shifts.forEach((shift: any) => {
+        if (shift.is_available) {
+          // Generate 30-minute slots within the shift
+          const start = new Date(`2000-01-01T${shift.start_time}`)
+          const end = new Date(`2000-01-01T${shift.end_time}`)
+          
+          for (let time = new Date(start); time < end; time.setMinutes(time.getMinutes() + 30)) {
+            const timeStr = format(time, 'HH:mm')
+            times.push(timeStr)
+          }
+        }
+      })
+    }
+    return times.sort()
+  }
+
+  // Generate available times based on staff availability (fallback)
+  const generateTimesForStaff = (staffId: string, date: string) => {
+    const times = []
+    // Different available times for different staff members (for demo purposes)
+    if (staffId && date) {
+      const dayOfWeek = new Date(date).getDay()
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+      
+      // Morning shift (9:00 - 13:00)
+      if (!isWeekend || Math.random() > 0.5) {
+        for (let hour = 9; hour <= 13; hour++) {
+          for (let minute of [0, 30]) {
+            // Randomly skip some slots to simulate unavailability
+            if (Math.random() > 0.3) {
+              times.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`)
             }
           }
         }
       }
-      return times.sort()
+      
+      // Evening shift (15:00 - 21:00)
+      if (!isWeekend || Math.random() > 0.3) {
+        for (let hour = 15; hour <= 21; hour++) {
+          for (let minute of [0, 30]) {
+            if (hour === 21 && minute === 30) continue // Skip 21:30
+            // Randomly skip some slots to simulate unavailability
+            if (Math.random() > 0.3) {
+              times.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`)
+            }
+          }
+        }
+      }
     }
-    
-    setAvailableTimes(generateTimesForStaff(selectedStaff, selectedDate))
-  }, [selectedStaff, selectedDate])
+    return times.sort()
+  }
 
   // Fetch services, staff, and assignments
   useEffect(() => {
@@ -302,9 +450,9 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
         if (!selectedLocationId) return
         
         const [servicesData, staffsData, staffServiceData] = await Promise.all([
-          serviceService.getServicesByBusiness(businessId, selectedLocationId),
-          staffService.getStaffByBusiness(businessId, selectedLocationId),
-          staffServiceService.getAllStaffServices(businessId),
+          widgetService.getServices(businessId, selectedLocationId),
+          widgetService.getStaff(businessId, selectedLocationId),
+          widgetService.getStaffServices(businessId),
         ])
         
         setAllServices(servicesData)
@@ -521,9 +669,6 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
     const location = locations.find(loc => loc.id === locationId)
     if (location) {
       setSelectedLocation(location)
-      // Update business name and address
-      businessName = location.name
-      businessAddress = location.address
     }
     setCurrentStep('selection')
   }
@@ -806,6 +951,7 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
                   <button 
                     onClick={prevMonth}
                     className="p-1 rounded-full hover:bg-gray-100"
+                    disabled={isPrevMonthDisabled()}
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
@@ -983,6 +1129,12 @@ export function Widget({ businessId, locationId, businessName = 'Мой Сало
       </div>
     </div>
   )
+
+  const isPrevMonthDisabled = () => {
+    const today = new Date()
+    const prevMonth = addMonths(currentMonth, -1)
+    return prevMonth.getMonth() < today.getMonth() && prevMonth.getFullYear() <= today.getFullYear()
+  }
 
   return (
     <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden">

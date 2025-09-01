@@ -314,6 +314,13 @@ type StaffAvailabilityResponse struct {
 	Reason      string `json:"reason,omitempty"`
 }
 
+// AvailableStaffResponse для ответа о доступных сотрудниках (для виджета)
+type AvailableStaffResponse struct {
+	StaffID     string `json:"staff_id"`
+	StaffName   string `json:"staff_name"`
+	IsAvailable bool   `json:"is_available"`
+}
+
 // AvailabilityLogResponse для логов доступности
 type AvailabilityLogResponse struct {
 	ID             string    `json:"id"`

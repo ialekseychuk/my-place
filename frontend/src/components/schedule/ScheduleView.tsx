@@ -2,8 +2,8 @@ import { DatePickerDialog } from '@/components/DatePickerDialog';
 import { Button } from '@/components/ui/button';
 import { useLocation } from '@/contexts/LocationContext';
 import { bookingService } from '@/services/bookingService';
-import { staffService } from '@/services/staff';
 import { ScheduleService } from '@/services/scheduleService';
+import { widgetService } from '@/services/widgetService';
 import type { Booking } from '@/types/booking';
 import type { Staff } from '@/types/staff';
 import { format, startOfDay } from 'date-fns';
@@ -91,8 +91,8 @@ export function ScheduleView({ businessID }: ScheduleViewProps) {
       // We're checking availability for a time range that covers a typical workday (9:00-17:00)
       const availableStaffData = await scheduleService.getAvailableStaff(formattedDate, '09:00', '17:00');
       
-      // Fetch all staff members to get full staff details
-      const allStaffData = await staffService.getStaffByBusiness(businessID, currentLocation?.id || '');
+      // Fetch all staff members to get full staff details using widget service
+      const allStaffData = await widgetService.getStaff(businessID, currentLocation?.id || '');
       
       // Filter staff members to only include those who are available
       const availableStaffIds = availableStaffData

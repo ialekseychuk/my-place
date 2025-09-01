@@ -19,10 +19,8 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { bookingService } from '@/services/bookingService'
-import { serviceService } from '@/services/service'
-import { staffService } from '@/services/staff'
-import { staffServiceService } from '@/services/staff-service'
 import { ScheduleService } from '@/services/scheduleService'
+import { widgetService } from '@/services/widgetService'
 import type { CreateBookingRequest } from '@/types/booking'
 import type { Service } from '@/types/service'
 import type { Staff } from '@/types/staff'
@@ -83,9 +81,9 @@ export function BookingCreationDialog({
     try {
       setLoading(true)
       const [servicesData, staffsData, staffServiceData] = await Promise.all([
-        serviceService.getServicesByBusiness(businessID, locationID),
-        staffService.getStaffByBusiness(businessID, locationID || ''),
-        staffServiceService.getAllStaffServices(businessID),
+        widgetService.getServices(businessID, locationID),
+        widgetService.getStaff(businessID, locationID || ''),
+        widgetService.getStaffServices(businessID),
       ])
       
       setAllServices(servicesData)
