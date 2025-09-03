@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ialekseychuk/my-place/internal/domain"
+	rawsql "github.com/ialekseychuk/my-place/pkg/raw_sql"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -84,6 +85,10 @@ func (r *bookingRepository) GetByBusinessID(ctx context.Context, businessID stri
 	}
 
 	query = baseQuery
+
+
+	t := rawsql.BuildSQL(query, args)
+	_  = t
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {

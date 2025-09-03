@@ -13,7 +13,7 @@ import type { StaffServiceAssignment } from '@/types/staff-service'
 import { addDays, addMonths, format, getDay, isToday, startOfMonth } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ArrowLeft, Building, Calendar, ChevronLeft, ChevronRight, Scissors, User } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
 interface WidgetProps {
@@ -175,6 +175,10 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [customerName, setCustomerName] = useState<string>('')
   const [customerPhone, setCustomerPhone] = useState<string>('')
+  
+  // Refs for input elements
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const phoneInputRef = useRef<HTMLInputElement>(null)
   
   // Availability tracking
   const [staffAvailability, setStaffAvailability] = useState<Record<string, boolean>>({})
@@ -1156,6 +1160,7 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
               <Label htmlFor="customerName">Ваше имя</Label>
               <Input
                 id="customerName"
+                ref={nameInputRef}
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Введите ваше имя"
@@ -1165,6 +1170,7 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
             <div className="space-y-2">
               <Label htmlFor="customerPhone">Телефон</Label>
               <PhoneInput
+                ref={phoneInputRef}
                 value={customerPhone}
                 onChange={setCustomerPhone}
                 placeholder="+7 (999) 123-45-67"
