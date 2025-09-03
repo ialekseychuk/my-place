@@ -188,9 +188,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([])
   const [activeCategory, setActiveCategory] = useState<string>('')
-  const [isStaffOpen, setIsStaffOpen] = useState(false)
-  const [isServiceOpen, setIsServiceOpen] = useState(false)
-  const [isDateTimeOpen, setIsDateTimeOpen] = useState(false)
   
   // Search
   const [searchQuery, setSearchQuery] = useState('')
@@ -792,86 +789,279 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
   
   // Combined selection step (staff, service, date/time)
   const SelectionStep = () => {
-    const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-    const weeks = getWeeks(currentMonth)
     return (
       <div className="p-4">
-        <div className="space-y-6">
-          {/* Staff Selection */}
-          <div className="border rounded-lg overflow-hidden">
-            <div 
-              className="p-4 border-b bg-gray-50 flex justify-between items-center cursor-pointer"
-              onClick={() => setIsStaffOpen(!isStaffOpen)}
-            >
-              <h3 className="text-lg font-medium">Специалист</h3>
-              <div className={`px-3 py-1 rounded-full text-sm ${selectedStaff ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
-                {selectedStaffObj ? selectedStaffObj.full_name : 'Не выбрано'}
-              </div>
+        {renderStaffSelection()}
+      </div>
+    )
+  }
+
+  const renderStaffSelection = () => {
+    const weeks = getWeeks(currentMonth)
+    const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    
+    return (
+      <div className="space-y-6">
+        {/* Staff Selection */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+            <h3 className="text-lg font-medium">Специалист</h3>
+            <div className={`px-3 py-1 rounded-full text-sm ${selectedStaff ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
+              {selectedStaffObj ? selectedStaffObj.full_name : 'Не выбрано'}
             </div>
-            {isStaffOpen && (
-              <div className="p-4">
-                <div className="space-y-3">
+          </div>
+          
+          <div className="p-4">
+            <div className="space-y-3">
+              <div 
+                className="p-3 rounded-md border flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                onClick={() => {
+                  setSelectedStaff('')
+                  setSelectedStaffObj(null)
+                }}
+              >
+                <div className="flex items-center">
+                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User className="h-6 w-6 text-gray-500" />
+                  </div>
+                  <span className="ml-3 font-medium">Любой специалист</span>
+                </div>
+                <div className={`h-5 w-5 rounded-full ${selectedStaff === '' ? 'bg-blue-500' : 'border border-gray-300'}`}></div>
+              </div>
+              
+              {staffs.map(staff => {
+                const canProvideService = !selectedService || 
+                  staffServiceAssignments.some(assignment => 
+                    assignment.staff_id === staff.id && 
+                    assignment.service_id === selectedService
+                  )
+                const isAvailableOnDate = !selectedDate || staffAvailability[staff.id] === true
+                const hasTimeSlots = !selectedDate || !selectedService || (staffTimeSlots[staff.id]?.length > 0)
+                const isAvailable = canProvideService && isAvailableOnDate && hasTimeSlots
+                
+                return (
                   <div 
-                    className="p-3 rounded-md border flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                    key={staff.id}
+                    className={`p-3 rounded-md border flex items-center justify-between
+                      ${!isAvailable ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}
+                      ${selectedStaff === staff.id ? 'ring-2 ring-blue-500' : ''}`}
                     onClick={() => {
-                      setSelectedStaff('')
-                      setSelectedStaffObj(null)
+                      if (isAvailable) {
+                        setSelectedStaff(staff.id)
+                        setSelectedStaffObj(staff)
+                      } else {
+                        toast({
+                          title: 'Недоступно',
+                          description: 'Этот мастер не может быть выбран для текущей услуги или времени',
+                          variant: 'destructive',
+                        })
+                      }
                     }}
                   >
                     <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                         <User className="h-6 w-6 text-gray-500" />
                       </div>
-                      <span className="ml-3 font-medium">Любой специалист</span>
+                      <div className="ml-3">
+                        <div className="font-medium">{staff.full_name}</div>
+                        <div className="text-sm text-gray-600">{staff.position}</div>
+                        <div className="flex items-center mt-1">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span key={star} className="text-yellow-400 text-xs">★</span>
+                          ))}
+                          <span className="text-xs text-gray-500 ml-1">{Math.floor(Math.random() * 100) + 20} отзывов</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className={`h-5 w-5 rounded-full ${selectedStaff === '' ? 'bg-blue-500' : 'border border-gray-300'}`}></div>
+                    <div className={`h-5 w-5 rounded-full ${selectedStaff === staff.id ? 'bg-blue-500' : 'border border-gray-300'}`}></div>
                   </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+        
+        {/* Service Selection */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+            <h3 className="text-lg font-medium">Услуга</h3>
+            <div className={`px-3 py-1 rounded-full text-sm ${selectedService ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
+              {selectedServiceObj ? selectedServiceObj.name : 'Не выбрано'}
+            </div>
+          </div>
+          
+          <div className="p-4">
+            <div className="flex overflow-x-auto space-x-2 pb-4 mb-3">
+              {serviceCategories.map(category => (
+                <button
+                  key={category.id}
+                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium 
+                    ${activeCategory === category.id ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}
+                  `}
+                  onClick={() => setActiveCategory(category.id)}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+            
+            <div className="space-y-3">
+              {serviceCategories
+                .find(cat => cat.id === activeCategory)?.services
+                .filter(service => !searchQuery || service.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map(service => {
+                  const canBeProvided = staffServiceAssignments.some(assignment => {
+                    const staffId = assignment.staff_id
+                    const isAssignedToService = assignment.service_id === service.id
+                    const isStaffAvailable = !selectedDate || staffAvailability[staffId] === true
+                    const hasTimeSlots = !selectedDate || (staffTimeSlots[staffId]?.length > 0)
+                    return isAssignedToService && (!selectedStaff || staffId === selectedStaff) && isStaffAvailable && hasTimeSlots
+                  })
+                  const isAvailable = canBeProvided
                   
-                  {staffs.map(staff => {
-                    const canProvideService = !selectedService || 
-                      staffServiceAssignments.some(assignment => 
-                        assignment.staff_id === staff.id && 
-                        assignment.service_id === selectedService
-                      )
-                    const isAvailableOnDate = !selectedDate || staffAvailability[staff.id] === true
-                    const hasTimeSlots = !selectedDate || !selectedService || (staffTimeSlots[staff.id]?.length > 0)
-                    const isAvailable = canProvideService && isAvailableOnDate && hasTimeSlots
+                  return (
+                    <div 
+                      key={service.id}
+                      className={`p-3 rounded-md border flex justify-between items-center
+                        ${!isAvailable ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}
+                        ${selectedService === service.id ? 'ring-2 ring-blue-500' : ''}
+                      `}
+                      onClick={() => {
+                        if (isAvailable) {
+                          setSelectedService(service.id)
+                          setSelectedServiceObj(service)
+                        } else {
+                          toast({
+                            title: 'Недоступно',
+                            description: 'Эта услуга недоступна для выбранного мастера или времени',
+                            variant: 'destructive',
+                          })
+                        }
+                      }}
+                    >
+                      <div>
+                        <div className="font-medium">{service.name}</div>
+                        <div className="text-sm text-gray-500">
+                          {service.duration_min} мин
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="text-blue-600 font-medium mr-3">
+                          {service.price_cents / 100} ₽
+                        </div>
+                        <div className={`h-5 w-5 rounded-full ${selectedService === service.id ? 'bg-blue-500' : 'border border-gray-300'}`}></div>
+                      </div>
+                    </div>
+                  )
+                })
+              }
+            </div>
+          </div>
+        </div>
+        
+        {/* Date and Time Selection */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+            <h3 className="text-lg font-medium">Дата и время</h3>
+            <div className={`px-3 py-1 rounded-full text-sm ${(selectedDate && selectedTime) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
+              {(selectedDate && selectedTime) ? `${formatDate(selectedDate)}, ${selectedTime}` : 'Не выбрано'}
+            </div>
+          </div>
+          
+          <div className="p-4">
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <button 
+                  onClick={prevMonth}
+                  className="p-1 rounded-full hover:bg-gray-100"
+                  disabled={isPrevMonthDisabled()}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                
+                <h4 className="font-medium text-lg">
+                  {format(currentMonth, 'LLLL', { locale: ru }).charAt(0).toUpperCase() + format(currentMonth, 'LLLL', { locale: ru }).slice(1)}
+                </h4>
+                
+                <button 
+                  onClick={nextMonth}
+                  className="p-1 rounded-full hover:bg-gray-100"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-7 gap-2 text-center">
+                {dayNames.map(day => (
+                  <div key={day} className="text-sm font-medium text-gray-500 py-1">
+                    {day}
+                  </div>
+                ))}
+                
+                {weeks.map((day, i) => {
+                  if (!day) {
+                    return <div key={`empty-${i}`} className="h-9"></div>
+                  }
+                  
+                  const dateStr = format(day, 'yyyy-MM-dd')
+                  const isSelected = selectedDate === dateStr
+                  const isToday_ = isToday(day)
+                  
+                  const isPast = day < new Date(new Date().setHours(0, 0, 0, 0))
+                  
+                  return (
+                    <div 
+                      key={dateStr}
+                      className={`h-9 flex items-center justify-center rounded-full cursor-pointer
+                        ${isSelected ? 'bg-blue-500 text-white font-bold' : ''}
+                        ${isToday_ && !isSelected ? 'border border-gray-300' : ''}
+                        ${isPast ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100'}
+                      `}
+                      onClick={() => !isPast && setSelectedDate(dateStr)}
+                    >
+                      {format(day, 'd')}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            
+            {selectedDate && (
+              <div>
+                <h5 className="font-medium mb-3 text-sm">Доступное время</h5>
+                <div className="grid grid-cols-3 gap-2">
+                  {availableTimes.map(time => {
+                    const isPast = isTimeInPast(selectedDate, time)
+                    const isSelected = selectedTime === time
+                    
+                    // Check if time slot is available
+                    const isAvailable = !isPast && (
+                      selectedStaff 
+                        ? staffTimeSlots[selectedStaff]?.includes(time)
+                        : Object.values(staffTimeSlots).some(slots => slots.includes(time))
+                    )
                     
                     return (
                       <div 
-                        key={staff.id}
-                        className={`p-3 rounded-md border flex items-center justify-between
-                          ${!isAvailable ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}
-                          ${selectedStaff === staff.id ? 'ring-2 ring-blue-500' : ''}`}
+                        key={time}
+                        className={`py-2 text-center rounded
+                          ${isSelected ? 'bg-blue-500 text-white' : ''}
+                          ${isPast ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}
+                          ${isAvailable ? 'bg-gray-100 hover:bg-gray-200 text-gray-800 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
+                        `}
                         onClick={() => {
                           if (isAvailable) {
-                            setSelectedStaff(staff.id)
-                            setSelectedStaffObj(staff)
+                            setSelectedTime(time)
                           } else {
                             toast({
                               title: 'Недоступно',
-                              description: 'Этот мастер не может быть выбран для текущей услуги или времени',
+                              description: 'Это время недоступно для выбранного мастера или услуги',
                               variant: 'destructive',
                             })
                           }
                         }}
                       >
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                            <User className="h-6 w-6 text-gray-500" />
-                          </div>
-                          <div className="ml-3">
-                            <div className="font-medium">{staff.full_name}</div>
-                            <div className="text-sm text-gray-600">{staff.position}</div>
-                            <div className="flex items-center mt-1">
-                              {[1, 2, 3, 4, 5].map(star => (
-                                <span key={star} className="text-yellow-400 text-xs">★</span>
-                              ))}
-                              <span className="text-xs text-gray-500 ml-1">{Math.floor(Math.random() * 100) + 20} отзывов</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className={`h-5 w-5 rounded-full ${selectedStaff === staff.id ? 'bg-blue-500' : 'border border-gray-300'}`}></div>
+                        {time}
                       </div>
                     )
                   })}
@@ -879,217 +1069,19 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
               </div>
             )}
           </div>
-          
-          {/* Service Selection */}
-          <div className="border rounded-lg overflow-hidden">
-            <div 
-              className="p-4 border-b bg-gray-50 flex justify-between items-center cursor-pointer"
-              onClick={() => setIsServiceOpen(!isServiceOpen)}
-            >
-              <h3 className="text-lg font-medium">Услуга</h3>
-              <div className={`px-3 py-1 rounded-full text-sm ${selectedService ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
-                {selectedServiceObj ? selectedServiceObj.name : 'Не выбрано'}
-              </div>
-            </div>
-            {isServiceOpen && (
-              <div className="p-4">
-                <div className="flex overflow-x-auto space-x-2 pb-4 mb-3">
-                  {serviceCategories.map(category => (
-                    <button
-                      key={category.id}
-                      className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium 
-                        ${activeCategory === category.id ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}
-                      `}
-                      onClick={() => setActiveCategory(category.id)}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="space-y-3">
-                  {serviceCategories
-                    .find(cat => cat.id === activeCategory)?.services
-                    .filter(service => !searchQuery || service.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .map(service => {
-                      const canBeProvided = staffServiceAssignments.some(assignment => {
-                        const staffId = assignment.staff_id
-                        const isAssignedToService = assignment.service_id === service.id
-                        const isStaffAvailable = !selectedDate || staffAvailability[staffId] === true
-                        const hasTimeSlots = !selectedDate || (staffTimeSlots[staffId]?.length > 0)
-                        return isAssignedToService && (!selectedStaff || staffId === selectedStaff) && isStaffAvailable && hasTimeSlots
-                      })
-                      const isAvailable = canBeProvided
-                      
-                      return (
-                        <div 
-                          key={service.id}
-                          className={`p-3 rounded-md border flex justify-between items-center
-                            ${!isAvailable ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}
-                            ${selectedService === service.id ? 'ring-2 ring-blue-500' : ''}
-                          `}
-                          onClick={() => {
-                            if (isAvailable) {
-                              setSelectedService(service.id)
-                              setSelectedServiceObj(service)
-                            } else {
-                              toast({
-                                title: 'Недоступно',
-                                description: 'Эта услуга недоступна для выбранного мастера или времени',
-                                variant: 'destructive',
-                              })
-                            }
-                          }}
-                        >
-                          <div>
-                            <div className="font-medium">{service.name}</div>
-                            <div className="text-sm text-gray-500">
-                              {service.duration_min} мин
-                            </div>
-                          </div>
-                          <div className="flex items-center">
-                            <div className="text-blue-600 font-medium mr-3">
-                              {service.price_cents / 100} ₽
-                            </div>
-                            <div className={`h-5 w-5 rounded-full ${selectedService === service.id ? 'bg-blue-500' : 'border border-gray-300'}`}></div>
-                          </div>
-                        </div>
-                      )
-                    })
-                  }
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Date and Time Selection */}
-          <div className="border rounded-lg overflow-hidden">
-            <div 
-              className="p-4 border-b bg-gray-50 flex justify-between items-center cursor-pointer"
-              onClick={() => setIsDateTimeOpen(!isDateTimeOpen)}
-            >
-              <h3 className="text-lg font-medium">Дата и время</h3>
-              <div className={`px-3 py-1 rounded-full text-sm ${(selectedDate && selectedTime) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
-                {(selectedDate && selectedTime) ? `${formatDate(selectedDate)}, ${selectedTime}` : 'Не выбрано'}
-              </div>
-            </div>
-            {isDateTimeOpen && (
-              <div className="p-4">
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <button 
-                      onClick={prevMonth}
-                      className="p-1 rounded-full hover:bg-gray-100"
-                      disabled={isPrevMonthDisabled()}
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </button>
-                    
-                    <h4 className="font-medium text-lg">
-                      {format(currentMonth, 'LLLL', { locale: ru }).charAt(0).toUpperCase() + format(currentMonth, 'LLLL', { locale: ru }).slice(1)}
-                    </h4>
-                    
-                    <button 
-                      onClick={nextMonth}
-                      className="p-1 rounded-full hover:bg-gray-100"
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-7 gap-2 text-center">
-                    {dayNames.map(day => (
-                      <div key={day} className="text-sm font-medium text-gray-500 py-1">
-                        {day}
-                      </div>
-                    ))}
-                    
-                    {weeks.map((day, i) => {
-                      if (!day) {
-                        return <div key={`empty-${i}`} className="h-9"></div>
-                      }
-                      
-                      const dateStr = format(day, 'yyyy-MM-dd')
-                      const isSelected = selectedDate === dateStr
-                      const isToday_ = isToday(day)
-                      
-                      const isPast = day < new Date(new Date().setHours(0, 0, 0, 0))
-                      
-                      return (
-                        <div 
-                          key={dateStr}
-                          className={`h-9 flex items-center justify-center rounded-full cursor-pointer
-                            ${isSelected ? 'bg-blue-500 text-white font-bold' : ''}
-                            ${isToday_ && !isSelected ? 'border border-gray-300' : ''}
-                            ${isPast ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100'}
-                          `}
-                          onClick={() => !isPast && setSelectedDate(dateStr)}
-                        >
-                          {format(day, 'd')}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-                
-                {selectedDate && (
-                  <div>
-                    <h5 className="font-medium mb-3 text-sm">Доступное время</h5>
-                    <div className="grid grid-cols-3 gap-2">
-                      {availableTimes.map(time => {
-                        const isPast = isTimeInPast(selectedDate, time)
-                        const isSelected = selectedTime === time
-                        
-                        // Check if time slot is available
-                        const isAvailable = !isPast && (
-                          selectedStaff 
-                            ? staffTimeSlots[selectedStaff]?.includes(time)
-                            : Object.values(staffTimeSlots).some(slots => slots.includes(time))
-                        )
-                        
-                        return (
-                          <div 
-                            key={time}
-                            className={`py-2 text-center rounded
-                              ${isSelected ? 'bg-blue-500 text-white' : ''}
-                              ${isPast ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}
-                              ${isAvailable ? 'bg-gray-100 hover:bg-gray-200 text-gray-800 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
-                            `}
-                            onClick={() => {
-                              if (isAvailable) {
-                                setSelectedTime(time)
-                              } else {
-                                toast({
-                                  title: 'Недоступно',
-                                  description: 'Это время недоступно для выбранного мастера или услуги',
-                                  variant: 'destructive',
-                                })
-                              }
-                            }}
-                          >
-                            {time}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          
-          <Button 
-            className="w-full py-6 text-lg"
-            onClick={proceedToConfirmation}
-            disabled={!selectedService || !selectedStaff || !selectedDate || !selectedTime || !isValidSelection()}
-          >
-            Продолжить
-          </Button>
         </div>
+        
+        <Button 
+          className="w-full py-6 text-lg"
+          onClick={proceedToConfirmation}
+          disabled={!selectedService || !selectedStaff || !selectedDate || !selectedTime || !isValidSelection()}
+        >
+          Продолжить
+        </Button>
       </div>
     )
   }
-
+  
   // Confirmation step
   const ConfirmationStep = () => (
     <div className="p-4">

@@ -1276,7 +1276,7 @@ func (h *ScheduleHandler) GetBusinessTimeOffRequests(w http.ResponseWriter, r *h
 // @Produce json
 // @Param businessID path string true "Business ID"
 // @Param date query string true "Date (YYYY-MM-DD)"
-// @Param start_time query string false "Start time (HH:MM)" 
+// @Param start_time query string false "" 
 // @Param end_time query string false "End time (HH:MM)"
 // @Param location_id query string false "Location ID"
 // @Param exclude_staff_ids query []string false "Staff IDs to exclude"

@@ -112,6 +112,7 @@ func (h *BookingHandler) GetBookings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var startDate, endDate *time.Time
+	var locationID *string
 
 	// Parse start_date if provided
 	startDateParam := r.URL.Query().Get("start_date")
@@ -135,7 +136,12 @@ func (h *BookingHandler) GetBookings(w http.ResponseWriter, r *http.Request) {
 		endDate = &ed
 	}
 
-	bookings, err := h.bookingService.GetBookingsByBusiness(r.Context(), businessID, startDate, endDate)
+	locationIDParam := r.URL.Query().Get("location_id")
+	if locationIDParam != "" {
+		locationID = &locationIDParam
+	}
+
+	bookings, err := h.bookingService.GetBookingsByBusiness(r.Context(), businessID, startDate, endDate, locationID)
 	if err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "internal server error")
 		return

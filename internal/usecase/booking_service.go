@@ -114,15 +114,8 @@ func (s *BookingService) GetAvailableSlots(ctx context.Context, businessID strin
 	return slotResponses, nil
 }
 
-func (s *BookingService) GetBookingsByBusiness(ctx context.Context, businessID string, startDate, endDate *time.Time) ([]*dto.BookingResponse, error) {
-	// If endDate is provided, set it to the end of the day (23:59:59.999999999)
-	var adjustedEndDate *time.Time
-	if endDate != nil {
-		endOfDay := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 999999999, endDate.Location())
-		adjustedEndDate = &endOfDay
-	}
-
-	bookings, err := s.bookingRepo.GetByBusinessID(ctx, businessID, startDate, adjustedEndDate)
+func (s *BookingService) GetBookingsByBusiness(ctx context.Context, businessID string, startDate, endDate *time.Time, locationID *string) ([]*dto.BookingResponse, error) {
+	bookings, err := s.bookingRepo.GetByBusinessID(ctx, businessID, startDate, endDate, locationID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bookings: %w", err)
 	}

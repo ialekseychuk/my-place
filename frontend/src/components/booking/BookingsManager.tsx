@@ -47,12 +47,16 @@ export function BookingsManager({ businessID }: BookingsManagerProps) {
   const fetchBookings = async () => {
     try {
       setLoading(true)
+      console.log('Fetching bookings with:', { businessID, dateFilter, locationId: currentLocation?.id })
+      
       const data = await bookingService.getBookings(
         businessID,
         dateFilter.start,
         dateFilter.end,
         currentLocation?.id
       )
+      
+      console.log('Received bookings data:', data)
       setBookings(data || []) // Ensure we always set an array, even if data is null
       setError(null)
     } catch (err) {

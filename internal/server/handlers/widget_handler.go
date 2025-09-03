@@ -15,6 +15,7 @@ type WidgetHandler struct {
 	serviceService  *usecase.ServiceService
 	staffService    *usecase.StaffService
 	scheduleService *usecase.ScheduleService
+	bookingService  *usecase.BookingService
 }
 
 func NewWidgetHandler(
@@ -22,12 +23,14 @@ func NewWidgetHandler(
 	serviceService *usecase.ServiceService,
 	staffService *usecase.StaffService,
 	scheduleService *usecase.ScheduleService,
+	bookingService *usecase.BookingService,
 ) *WidgetHandler {
 	return &WidgetHandler{
 		locationService: locationService,
 		serviceService:  serviceService,
 		staffService:    staffService,
 		scheduleService: scheduleService,
+		bookingService:  bookingService,
 	}
 }
 
@@ -39,6 +42,8 @@ func (h *WidgetHandler) Routes() chi.Router {
 	r.Get("/staff/{businessID}", h.GetStaff)
 	r.Get("/staff-services/{businessID}", h.GetStaffServices)
 	r.Get("/availability/{businessID}", h.GetAvailableStaff)
+	r.Get("/bookings/{businessID}", h.GetStaffBookings)
+	r.Get("/staff/{staffID}/day", h.GetStaffDaySchedule) // New public endpoint for widget
 
 	return r
 }
@@ -277,4 +282,111 @@ func (h *WidgetHandler) GetAvailableStaff(w http.ResponseWriter, r *http.Request
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// @Summary Get bookings for a staff member on a specific date (public endpoint for widget)
+// @Description Get bookings for a staff member on a specific date without authentication
+// @Tags Widget
+// @Accept json
+// @Produce json
+// @Param businessID path string true "Business ID"
+// @Param staff_id query string true "Staff ID"
+// @Param date query string true "Date (YYYY-MM-DD)"
+// @Success 200 {array} dto.BookingResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/v1/widget/bookings/{businessID} [get]
+func (h *WidgetHandler) GetStaffBookings(w http.ResponseWriter, r *http.Request) {
+	businessID := chi.URLParam(r, "businessID")
+	if businessID == "" {
+		ErrorResponse(w, http.StatusBadRequest, "businessID is required")
+		return
+	}
+
+	staffID := r.URL.Query().Get("staff_id")
+	if staffID == "" {
+		ErrorResponse(w, http.StatusBadRequest, "staff_id is required")
+		return
+	}
+
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		ErrorResponse(w, http.StatusBadRequest, "date is required")
+		return
+	}
+
+	// Parse the date
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		ErrorResponse(w, http.StatusBadRequest, "invalid date format")
+		return
+	}
+
+	// Set start and end of day in UTC (as dates in DB are stored in UTC)
+	// But we need to convert the date to UTC based on Moscow timezone
+	moscowLoc, _ := time.LoadLocation("Europe/Moscow")
+	// Create a date in Moscow timezone
+	moscowDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, moscowLoc)
+
+	// Convert to UTC for database query
+	startOfDay := time.Date(moscowDate.Year(), moscowDate.Month(), moscowDate.Day(), 0, 0, 0, 0, time.UTC)
+	endOfDay := time.Date(moscowDate.Year(), moscowDate.Month(), moscowDate.Day(), 23, 59, 59, 999999999, time.UTC)
+
+	// Get bookings for the staff member on this date
+	bookings, err := h.bookingService.GetBookingsByBusiness(r.Context(), businessID, &startOfDay, &endOfDay, nil)
+	if err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Filter bookings for the specific staff member
+	var staffBookings []*dto.BookingResponse
+	for _, booking := range bookings {
+		if booking.StaffID == staffID {
+			staffBookings = append(staffBookings, booking)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(staffBookings)
+}
+
+// @Summary Get staff day schedule (public endpoint for widget)
+// @Description Get staff day schedule without authentication
+// @Tags Widget
+// @Accept json
+// @Produce json
+// @Param staffID path string true "Staff ID"
+// @Param date query string true "Date (YYYY-MM-DD)"
+// @Success 200 {object} dto.DayScheduleResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/v1/widget/staff/{staffID}/day [get]
+func (h *WidgetHandler) GetStaffDaySchedule(w http.ResponseWriter, r *http.Request) {
+	staffID := chi.URLParam(r, "staffID")
+	if staffID == "" {
+		ErrorResponse(w, http.StatusBadRequest, "Staff ID is required")
+		return
+	}
+
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		ErrorResponse(w, http.StatusBadRequest, "date parameter is required")
+		return
+	}
+
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		ErrorResponse(w, http.StatusBadRequest, "Invalid date format, use YYYY-MM-DD")
+		return
+	}
+
+	schedule, err := h.scheduleService.GetStaffDaySchedule(r.Context(), staffID, date)
+	if err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(schedule)
 }

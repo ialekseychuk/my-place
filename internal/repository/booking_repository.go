@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ialekseychuk/my-place/internal/domain"
@@ -45,7 +46,7 @@ func (r *bookingRepository) GetById(ctx context.Context, id string) (*domain.Boo
 	return &booking, nil
 }
 
-func (r *bookingRepository) GetByBusinessID(ctx context.Context, businessID string, startDate, endDate *time.Time) ([]*domain.Booking, error) {
+func (r *bookingRepository) GetByBusinessID(ctx context.Context, businessID string, startDate, endDate *time.Time, locationID *string) ([]*domain.Booking, error) {
 	var query string
 	var args []interface{}
 
@@ -57,20 +58,32 @@ func (r *bookingRepository) GetByBusinessID(ctx context.Context, businessID stri
 	`
 
 	args = append(args, businessID)
+	argIndex := 2 // Start from $2 since $1 is businessID
 
-	if startDate != nil && endDate != nil {
-		query = baseQuery + ` AND b.start_at >= $2 AND b.start_at <= $3 ORDER BY b.start_at DESC`
-		args = append(args, *startDate, *endDate)
-	} else if startDate != nil {
-		query = baseQuery + ` AND b.start_at >= $2 ORDER BY b.start_at DESC`
-		args = append(args, *startDate)
-	} else if endDate != nil {
-		query = baseQuery + ` AND b.start_at <= $2 ORDER BY b.start_at DESC`
-		args = append(args, *endDate)
-	} else {
-		query = baseQuery + ` ORDER BY b.start_at DESC`
+	// Add location filter if provided
+	if locationID != nil {
+		baseQuery += fmt.Sprintf(" AND b.location_id = $%d", argIndex)
+		args = append(args, *locationID)
+		argIndex++
 	}
 
+	if startDate != nil && endDate != nil {
+		baseQuery += fmt.Sprintf(" AND b.start_at >= $%d AND b.start_at <= $%d ORDER BY b.start_at DESC", argIndex, argIndex+1)
+		args = append(args, *startDate, *endDate)
+		argIndex += 2
+	} else if startDate != nil {
+		baseQuery += fmt.Sprintf(" AND b.start_at >= $%d ORDER BY b.start_at DESC", argIndex)
+		args = append(args, *startDate)
+		argIndex++
+	} else if endDate != nil {
+		baseQuery += fmt.Sprintf(" AND b.start_at <= $%d ORDER BY b.start_at DESC", argIndex)
+		args = append(args, *endDate)
+		argIndex++
+	} else {
+		baseQuery += " ORDER BY b.start_at DESC"
+	}
+
+	query = baseQuery
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {

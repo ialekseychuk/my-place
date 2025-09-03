@@ -65,14 +65,15 @@ func main() {
 	bh := handlers.NewBusinessHandler(ucBusines)
 	authHandler := handlers.NewAuthHandler(authService)
 
-	sh := handlers.NewServiceHandler(ucService)
-	sth := handlers.NewStaffHandler(ucStaff)
-	stsh := handlers.NewStaffServiceHandler(ucStaff)
-	bkh := handlers.NewBookingHandler(ucBooking)
+	serviceHandler := handlers.NewServiceHandler(ucService)
+	categoryHandler := handlers.NewServiceCategoryHandler()
+	staffHandler := handlers.NewStaffHandler(ucStaff)
+	staffServiceHandler := handlers.NewStaffServiceHandler(ucStaff)
+	bookingHandler := handlers.NewBookingHandler(ucBooking)
 	scheduleHandler := handlers.NewScheduleHandler(scheduleService)
 	clientHandler := handlers.NewClientHandler(clientService)
 	locationHandler := handlers.NewLocationHandler(locationService)
-	widgetHandler := handlers.NewWidgetHandler(locationService, ucService, ucStaff, scheduleService) // Add widget handler
+	widgetHandler := handlers.NewWidgetHandler(locationService, ucService, ucStaff, scheduleService, ucBooking) // Add widget handler with booking service
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger(logger))
@@ -92,11 +93,6 @@ func main() {
 	r.Route("/api/v1", func(v1 chi.Router) {
 		v1.Use(middleware.JsonResponse)
 
-		// Debug endpoint to verify routing
-		v1.Get("/debug", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("debug endpoint reached"))
-		})
-
 		// Public routes
 		v1.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("api running"))
@@ -114,33 +110,22 @@ func main() {
 			protected.Route("/businesses", func(br chi.Router) {
 				br.Post("/", bh.CreateBusiness)
 
-				// Debug endpoint for businesses
-				br.Get("/debug", func(w http.ResponseWriter, r *http.Request) {
-					w.Write([]byte("business debug endpoint reached"))
-				})
-
 				br.Route("/{businessID}", func(bir chi.Router) {
-					// Debug endpoint for specific business
-					bir.Get("/debug", func(w http.ResponseWriter, r *http.Request) {
-						businessID := chi.URLParam(r, "businessID")
-						w.Write([]byte("business " + businessID + " debug endpoint reached"))
-					})
-
-					// Business owner only routes
 					bir.Group(func(owner chi.Router) {
 						owner.Use(middleware.RequireRole("owner"))
 						owner.Get("/", bh.GetBusiness)
 						owner.Mount("/locations", locationHandler.Routes())
-						owner.Mount("/services", sh.Routes())
-						owner.Mount("/staff-services", stsh.Routes())
+						owner.Mount("/services", serviceHandler.Routes())
+						owner.Mount("/categories", categoryHandler.Routes())
+						owner.Mount("/staff-services", staffServiceHandler.Routes())
 						owner.Mount("/schedule", scheduleHandler.Routes())
 						owner.Mount("/clients", clientHandler.Routes())
 					})
 
 					bir.Group(func(staff chi.Router) {
 						staff.Use(middleware.RequireAnyRole("owner", "staff"))
-						staff.Mount("/bookings", bkh.Routes())
-						staff.Mount("/staffs", sth.Routes())
+						staff.Mount("/bookings", bookingHandler.Routes())
+						staff.Mount("/staffs", staffHandler.Routes())
 					})
 				})
 			})
