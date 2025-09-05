@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import {
     Calendar,
     Home,
+    LayersIcon,
     Link2,
     LogOut,
     MapPin,
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'Персонал', href: '/staff', icon: Users },
   { name: 'Услуги персонала', href: '/staff-services', icon: Link2 },
   { name: 'Услуги', href: '/services', icon: Package },
+  { name: 'Услуги по категориям', href: '/category-services', icon: LayersIcon },
   { name: 'Расписание', href: '/schedule', icon: Calendar },
   { name: 'Бронирования', href: '/bookings', icon: Calendar },
   { name: 'Клиенты', href: '/clients', icon: User },

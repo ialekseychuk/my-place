@@ -66,7 +66,6 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authService)
 
 	serviceHandler := handlers.NewServiceHandler(ucService)
-	categoryHandler := handlers.NewServiceCategoryHandler()
 	staffHandler := handlers.NewStaffHandler(ucStaff)
 	staffServiceHandler := handlers.NewStaffServiceHandler(ucStaff)
 	bookingHandler := handlers.NewBookingHandler(ucBooking)
@@ -116,7 +115,6 @@ func main() {
 						owner.Get("/", bh.GetBusiness)
 						owner.Mount("/locations", locationHandler.Routes())
 						owner.Mount("/services", serviceHandler.Routes())
-						owner.Mount("/categories", categoryHandler.Routes())
 						owner.Mount("/staff-services", staffServiceHandler.Routes())
 						owner.Mount("/schedule", scheduleHandler.Routes())
 						owner.Mount("/clients", clientHandler.Routes())

@@ -48,17 +48,14 @@ func (uc *BusinessUseCase) CreateBusiness(ctx context.Context, name, tz string) 
 
 // RegisterBusiness creates a new business with owner and working hours
 func (uc *BusinessUseCase) RegisterBusiness(ctx context.Context, req dto.CreateBusinessRequest) (*dto.CreateBusinessResponse, error) {
-	// Generate unique IDs
 	businessID := generateID()
 	userID := generateID()
 
-	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.OwnerPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	// Create business
 	business := &domain.Business{
 		ID:                       businessID,
 		Name:                     req.BusinessName,

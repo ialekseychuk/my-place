@@ -10,6 +10,7 @@ import { ServiceDataProvider } from '@/contexts/ServiceDataContext'
 import { StaffDataProvider } from '@/contexts/StaffDataContext'
 import { useDialog } from '@/hooks/use-dialog'
 import { BookingsPage } from '@/pages/BookingsPage'
+import { CategoryServicesPage } from '@/pages/CategoryServicesPage'
 import { ClientsPage } from '@/pages/ClientsPage'
 import { Dashboard } from '@/pages/Dashboard'
 import { LocationsPage } from '@/pages/LocationsPage'
@@ -61,6 +62,7 @@ function App() {
                         <Route path="staff" element={<StaffPage />} />
                         <Route path="staff-services" element={<StaffServicePage />} />
                         <Route path="services" element={<ServicesPage />} />
+                        <Route path="category-services" element={<CategoryServicesPage />} />
                         <Route path="schedule" element={<SchedulePage />} />
                         <Route path="bookings" element={<BookingsPage />} />
                         <Route path="clients" element={<ClientsPage />} />

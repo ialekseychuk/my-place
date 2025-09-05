@@ -13,7 +13,7 @@ import type { StaffServiceAssignment } from '@/types/staff-service'
 import { addDays, addMonths, format, getDay, isToday, startOfMonth } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ArrowLeft, Building, Calendar, ChevronLeft, ChevronRight, Scissors, User } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback, memo } from 'react'
 import { useLocation } from 'react-router-dom'
 
 interface WidgetProps {
@@ -93,6 +93,7 @@ const mockStaff: Staff[] = [
 const mockServices: Service[] = [
   {
     id: 'service1',
+    order_index: 1,
     business_id: 'demo-business-id',
     name: 'Мужская стрижка',
     duration_min: 30,
@@ -102,6 +103,7 @@ const mockServices: Service[] = [
   },
   {
     id: 'service2',
+    order_index: 2,
     business_id: 'demo-business-id',
     name: 'Женская стрижка',
     duration_min: 60,
@@ -111,6 +113,7 @@ const mockServices: Service[] = [
   },
   {
     id: 'service3',
+    order_index: 3,
     business_id: 'demo-business-id',
     name: 'Окрашивание',
     duration_min: 120,
@@ -150,6 +153,29 @@ const mockAssignments: StaffServiceAssignment[] = [
   }
 ]
 
+// Initial booking data
+const initialBookingData: CreateBookingRequest = {
+  service_id: '',
+  staff_id: '',
+  start_at: '',
+  customer_name: '',
+  customer_phone: '',
+  location_id: '',
+};
+
+// Custom debounce implementation
+const debounce = <T extends (...args: any[]) => void>(func: T, wait: number): ((...args: Parameters<T>) => void) => {
+  let timeout: NodeJS.Timeout | null = null
+  return (...args: Parameters<T>) => {
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+    timeout = setTimeout(() => {
+      func(...args)
+    }, wait)
+  }
+}
+
 export function Widget({ businessId, locationId: propLocationId, businessName = 'Мой Салон', businessAddress = 'ул. Примерная, д.1' }: WidgetProps) {
   const { toast } = useToast()
   const location = useLocation()
@@ -173,8 +199,9 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
   const [selectedStaffObj, setSelectedStaffObj] = useState<Staff | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
-  const [customerName, setCustomerName] = useState<string>('')
-  const [customerPhone, setCustomerPhone] = useState<string>('')
+  
+  // Booking data
+  const [bookingData, setBookingData] = useState<CreateBookingRequest>(initialBookingData)
   
   // Refs for input elements
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -199,16 +226,25 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
   // Search
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Sync bookingData with selected values
+  useEffect(() => {
+    setBookingData(prev => ({
+      ...prev,
+      service_id: selectedService,
+      staff_id: selectedStaff,
+      start_at: selectedDate && selectedTime ? `${selectedDate}T${selectedTime}:00` : '',
+      location_id: selectedLocationId,
+    }))
+  }, [selectedService, selectedStaff, selectedDate, selectedTime, selectedLocationId])
+
   // Parse URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
     const urlLocationId = urlParams.get('location_id')
     
-    // Use URL location_id, then prop locationId, then empty string
     const initialLocationId = urlLocationId || propLocationId || ''
     setSelectedLocationId(initialLocationId)
     
-    // If we have a location ID, skip to selection step
     if (initialLocationId) {
       setCurrentStep('selection')
     }
@@ -221,26 +257,21 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
         const locationsData = await widgetService.getLocations(businessId)
         setLocations(locationsData)
         
-        // Check if we have a selected location ID
         if (selectedLocationId) {
-          // Find and set the selected location
           const location = locationsData.find(loc => loc.id === selectedLocationId)
           if (location) {
             setSelectedLocation(location)
             setCurrentStep('selection')
           }
         } else if (locationsData.length === 1) {
-          // If we only have one location, auto-select it
           setSelectedLocationId(locationsData[0].id)
           setSelectedLocation(locationsData[0])
           setCurrentStep('selection')
         } else {
-          // Multiple locations and no selection, stay on location step
           setCurrentStep('location')
         }
       } catch (error) {
         console.error('Error fetching locations:', error)
-        // Use mock data as fallback
         setLocations(mockLocations)
         
         toast({
@@ -262,9 +293,9 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     if (businessId) {
       fetchLocations()
     }
-  }, [businessId, selectedLocationId])
+  }, [businessId, selectedLocationId, toast])
 
-  // Generate available dates (current month and next month)
+  // Generate available dates
   useEffect(() => {
     const dates = []
     const today = new Date()
@@ -274,7 +305,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     }
     setAvailableDates(dates)
     
-    // Set default date to today (instead of tomorrow)
     if (dates.length > 0) {
       setSelectedDate(dates[0])
     }
@@ -286,7 +316,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
       try {
         setLoading(true)
         
-        // Only fetch data if we have a location selected
         if (!selectedLocationId) return
         
         const [servicesData, staffsData, staffServiceData] = await Promise.all([
@@ -299,11 +328,9 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
         setAllStaffs(staffsData)
         setStaffServiceAssignments(staffServiceData)
         
-        // Initially show all services and staff
         setServices(servicesData)
         setStaffs(staffsData)
         
-        // Create service categories (just for demo - in real app would come from backend)
         const categories: ServiceCategory[] = [
           { id: 'haircuts', name: 'СТРИЖКИ', services: [] },
           { id: 'coloring', name: 'ОКРАШИВАНИЕ', services: [] },
@@ -311,13 +338,11 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
           { id: 'additional', name: 'ДОПОЛНИТЕЛЬНЫЕ', services: [] }
         ]
         
-        // Distribute services among categories
         servicesData.forEach(service => {
           const randomIndex = Math.floor(Math.random() * categories.length)
           categories[randomIndex].services.push(service)
         })
         
-        // Remove empty categories
         const nonEmptyCategories = categories.filter(cat => cat.services.length > 0)
         setServiceCategories(nonEmptyCategories)
         
@@ -332,22 +357,18 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
           variant: 'destructive',
         })
         
-        // Use mock data as fallback
         setAllServices(mockServices)
         setAllStaffs(mockStaff)
         setStaffServiceAssignments(mockAssignments)
         
-        // Initially show all services and staff
         setServices(mockServices)
         setStaffs(mockStaff)
         
-        // Create service categories
         const categories: ServiceCategory[] = [
           { id: 'haircuts', name: 'СТРИЖКИ', services: [] },
           { id: 'coloring', name: 'ОКРАШИВАНИЕ', services: [] },
         ]
         
-        // Distribute services among categories
         mockServices.forEach(service => {
           if (service.name.includes('Мужская')) {
             categories[0].services.push(service)
@@ -356,7 +377,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
           }
         })
         
-        // Remove empty categories
         const nonEmptyCategories = categories.filter(cat => cat.services.length > 0)
         setServiceCategories(nonEmptyCategories)
         
@@ -371,7 +391,7 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     if (businessId && selectedLocationId) {
       fetchWidgetData()
     }
-  }, [businessId, selectedLocationId])
+  }, [businessId, selectedLocationId, toast])
 
   // Update masters
   useEffect(() => {
@@ -380,7 +400,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
       return
     }
 
-    // Все мастера остаются видимыми
     setStaffs(allStaffs)
   }, [selectedService, selectedDate, selectedLocationId, allStaffs, staffServiceAssignments, staffAvailability, staffTimeSlots])
 
@@ -391,7 +410,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
       return
     }
 
-    // Все услуги остаются видимыми
     setServices(allServices)
     updateServiceCategories(allServices)
   }, [selectedStaff, selectedDate, selectedLocationId, allServices, staffServiceAssignments, staffAvailability, staffTimeSlots])
@@ -399,7 +417,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
   // Generate available times
   useEffect(() => {
     const fetchAvailableTimes = async () => {
-      // Only fetch if we have a date and location selected
       if (!selectedDate || !selectedLocationId || !selectedLocation) {
         setAvailableTimes([])
         setStaffAvailability({})
@@ -409,7 +426,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
       }
       
       try {
-        // Get available staff for this date
         const availableStaff = await widgetService.getAvailableStaff(
           businessId, 
           selectedDate, 
@@ -418,7 +434,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
           selectedLocationId
         )
         
-        // Create availability map
         const availabilityMap: Record<string, boolean> = {}
         availableStaff.forEach(staff => {
           availabilityMap[staff.staff_id] = staff.is_available
@@ -428,14 +443,12 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
         const timeSlotsMap: Record<string, string[]> = {}
         const bookedTimeSlotsMap: Record<string, string[]> = {}
         
-        // Определяем, какие мастера учитывать
         const targetStaffIds = selectedStaff
           ? [selectedStaff]
           : availableStaff
               .filter(s => s.is_available)
               .map(s => s.staff_id)
         
-        // Get schedules for each target staff
         const schedules = await Promise.all(
           targetStaffIds.map(async staffId => {
             const schedule = await widgetService.getStaffDaySchedule(staffId, selectedDate)
@@ -446,7 +459,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
           })
         )
         
-        // Collect time slots
         const allAvailableTimes: string[] = []
         const allBookedTimes: string[] = []
         schedules.forEach(({ staffId, available, booked }) => {
@@ -456,7 +468,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
           allBookedTimes.push(...booked)
         })
         
-        // Remove duplicates and sort
         const uniqueTimes = [...new Set([...allAvailableTimes, ...allBookedTimes])].sort()
         setAvailableTimes(uniqueTimes)
         setStaffTimeSlots(timeSlotsMap)
@@ -476,9 +487,9 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     }
     
     fetchAvailableTimes()
-  }, [selectedStaff, selectedService, selectedDate, selectedLocationId, selectedLocation, businessId, allServices, staffServiceAssignments])
+  }, [selectedStaff, selectedService, selectedDate, selectedLocationId, selectedLocation, businessId, allServices, staffServiceAssignments, toast])
 
-  // Helper function to generate all time slots and track booked ones separately
+  // Helper function to generate all time slots
   const generateAllTimesFromSchedule = (schedule: any, serviceDuration?: number, existingBookings?: any[], timezone?: string) => {
     const availableTimes: string[] = []
     const bookedTimes: string[] = []
@@ -486,37 +497,28 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     if (schedule && schedule.shifts && schedule.shifts.length > 0) {
       schedule.shifts.forEach((shift: any) => {
         if (shift.is_available) {
-          // Remove microseconds from start_time and end_time
           const startTime = shift.start_time.split('.')[0]
           const endTime = shift.end_time.split('.')[0]
 
-          // Treat shift times as local to the location's timezone
           const start = new Date(`2000-01-01T${startTime}`)
           const end = new Date(`2000-01-01T${endTime}`)
           
-          const slotDuration = serviceDuration ? Math.ceil(serviceDuration / 30) * 30 * 60 * 1000 : 30 * 60 * 1000 // in milliseconds
+          const slotDuration = serviceDuration ? Math.ceil(serviceDuration / 30) * 30 * 60 * 1000 : 30 * 60 * 1000
           
-          // Generate slots that can accommodate the service duration
           for (let time = new Date(start); time.getTime() + slotDuration <= end.getTime(); time.setMinutes(time.getMinutes() + 30)) {
             const timeStr = format(time, 'HH:mm')
             
-            // Check if this time slot conflicts with any existing bookings
             let isBooked = false
             if (existingBookings && existingBookings.length > 0) {
-              // Parse the selected date
               const [year, month, day] = selectedDate.split('-').map(Number)
-              
-              // Create slot start time treating it as if it's in the location's timezone
               const [hour, minute] = timeStr.split(':').map(Number)
               const slotStart = new Date(year, month - 1, day, hour, minute, 0, 0)
               const slotEnd = new Date(slotStart.getTime() + slotDuration)
               
               for (const booking of existingBookings) {
-                // Treat booking times as local to the location's timezone, ignoring 'Z'
                 const bookingStartStr = booking.start_at.replace('Z', '')
                 const bookingEndStr = booking.end_at.replace('Z', '')
                 
-                // Parse booking times as local time
                 const [startDatePart, startTimePart] = bookingStartStr.split('T')
                 const [startYear, startMonth, startDay] = startDatePart.split('-').map(Number)
                 const [startHour, startMinute, startSecond] = startTimePart.split(':').map(Number)
@@ -527,7 +529,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
                 const [endHour, endMinute, endSecond] = endTimePart.split(':').map(Number)
                 const bookingEnd = new Date(endYear, endMonth - 1, endDay, endHour, endMinute, endSecond, 0)
                 
-                // Check for overlap
                 if (slotStart < bookingEnd && slotEnd > bookingStart) {
                   isBooked = true
                   break
@@ -535,7 +536,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
               }
             }
             
-            // Add the time slot to appropriate array
             if (isBooked) {
               bookedTimes.push(timeStr)
             } else {
@@ -546,7 +546,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
       })
     }
     
-    // Return both available and booked times
     return {
       available: availableTimes.sort(),
       booked: bookedTimes.sort()
@@ -555,7 +554,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
 
   // Helper function to update service categories
   const updateServiceCategories = (services: Service[]) => {
-    // Update service categories
     const updatedCategories = [...serviceCategories]
     updatedCategories.forEach(category => {
       category.services = category.services.filter(service => 
@@ -565,8 +563,15 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     setServiceCategories(updatedCategories.filter(cat => cat.services.length > 0))
   }
 
-  const handleBooking = async () => {
-    if (!selectedService || !selectedStaff || !selectedDate || !selectedTime || !customerName || !customerPhone) {
+  // Handle booking submission
+  const handleBooking = async (customerName: string, customerPhone: string) => {
+    const bookingPayload: CreateBookingRequest = {
+      ...bookingData,
+      customer_name: customerName,
+      customer_phone: customerPhone,
+    }
+
+    if (!bookingPayload.service_id || !bookingPayload.staff_id || !bookingPayload.start_at || !bookingPayload.customer_name || !bookingPayload.customer_phone) {
       toast({
         title: 'Ошибка',
         description: 'Пожалуйста, заполните все обязательные поля',
@@ -577,17 +582,7 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
 
     try {
       setBookingLoading(true)
-      
-      const bookingData: CreateBookingRequest = {
-        service_id: selectedService,
-        staff_id: selectedStaff,
-        start_at: `${selectedDate}T${selectedTime}:00`,
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        location_id: selectedLocationId,
-      }
-      
-      await bookingService.createBooking(businessId, bookingData)
+      await bookingService.createBooking(businessId, bookingPayload)
       
       toast({
         title: 'Успешно',
@@ -595,14 +590,13 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
       })
       
       // Reset form
+      setBookingData(initialBookingData)
       setSelectedService('')
       setSelectedServiceObj(null)
       setSelectedStaff('')
       setSelectedStaffObj(null)
       setSelectedDate('')
       setSelectedTime('')
-      setCustomerName('')
-      setCustomerPhone('')
       setCurrentStep('selection')
     } catch (error: any) {
       console.error('Error creating booking:', error)
@@ -645,7 +639,7 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
   const goBack = () => {
     switch (currentStep) {
       case 'selection':
-        if (!propLocationId) { // Only go back to location if locationId wasn't provided in props
+        if (!propLocationId) {
           setCurrentStep('location')
         }
         break
@@ -696,7 +690,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     }
   }
 
-  // Check if a time slot is in the past
   const isTimeInPast = (date: string, time: string) => {
     const now = new Date()
     const selectedDateTime = new Date(`${date}T${time}`)
@@ -706,15 +699,11 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
   const isValidSelection = () => {
     if (!selectedService || !selectedStaff || !selectedDate || !selectedTime) return false
 
-    // Проверяем, может ли выбранный мастер предоставить услугу
     const canProvideService = staffServiceAssignments.some(
       assignment => assignment.staff_id === selectedStaff && assignment.service_id === selectedService
     )
 
-    // Проверяем, доступен ли мастер в выбранную дату
     const isStaffAvailable = staffAvailability[selectedStaff] === true
-
-    // Проверяем, есть ли выбранный временной слот у мастера
     const hasTimeSlot = staffTimeSlots[selectedStaff]?.includes(selectedTime)
 
     return canProvideService && isStaffAvailable && hasTimeSlot
@@ -731,9 +720,7 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     )
   }
   
-  // Header component
   const Header = () => {
-    // Use the selected location name if available
     const displayName = selectedLocation ? selectedLocation.name : businessName
     const displayAddress = selectedLocation ? selectedLocation.address : businessAddress
     
@@ -757,7 +744,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     )
   }
   
-  // Location selection step
   const LocationStep = () => (
     <div className="p-4">
       <h3 className="text-xl font-bold mb-4">Выбрать филиал</h3>
@@ -794,14 +780,12 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     </div>
   )
   
-  // Combined selection step (staff, service, date/time)
   const SelectionStep = () => {
     const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
     const weeks = getWeeks(currentMonth)
     return (
       <div className="p-4">
         <div className="space-y-6">
-          {/* Staff Selection */}
           <div className="border rounded-lg overflow-hidden">
             <div 
               className="p-4 border-b bg-gray-50 flex justify-between items-center cursor-pointer"
@@ -862,7 +846,7 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
                       >
                         <div className="flex items-center">
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                            <User className="h-6 w-6 text-gray-500" />
+                            <User className="h-6 w-6 text-gray-96" />
                           </div>
                           <div className="ml-3">
                             <div className="font-medium">{staff.full_name}</div>
@@ -884,7 +868,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
             )}
           </div>
           
-          {/* Service Selection */}
           <div className="border rounded-lg overflow-hidden">
             <div 
               className="p-4 border-b bg-gray-50 flex justify-between items-center cursor-pointer"
@@ -966,7 +949,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
             )}
           </div>
           
-          {/* Date and Time Selection */}
           <div className="border rounded-lg overflow-hidden">
             <div 
               className="p-4 border-b bg-gray-50 flex justify-between items-center cursor-pointer"
@@ -1002,13 +984,13 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
                   </div>
                   
                   <div className="grid grid-cols-7 gap-2 text-center">
-                    {dayNames.map(day => (
+                  {dayNames.map(day => (
                       <div key={day} className="text-sm font-medium text-gray-500 py-1">
                         {day}
                       </div>
                     ))}
                     
-                    {weeks.map((day, i) => {
+                     {weeks.map((day, i) => {
                       if (!day) {
                         return <div key={`empty-${i}`} className="h-9"></div>
                       }
@@ -1044,7 +1026,6 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
                         const isPast = isTimeInPast(selectedDate, time)
                         const isSelected = selectedTime === time
                         
-                        // Check if time slot is available
                         const isAvailable = !isPast && (
                           selectedStaff 
                             ? staffTimeSlots[selectedStaff]?.includes(time)
@@ -1094,102 +1075,122 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
     )
   }
 
-  // Confirmation step
-  const ConfirmationStep = () => (
-    <div className="p-4">
-      <h3 className="text-xl font-bold mb-4">Подтверждение записи</h3>
-      
-      <div className="space-y-4 mb-6">
-        <div className="border rounded-lg overflow-hidden">
-          <div className="p-4 border-b bg-gray-50">
-            <h4 className="font-medium">Детали записи</h4>
-          </div>
-          
-          <div className="p-4 space-y-4">
-            {selectedServiceObj && (
-              <div className="flex items-center">
-                <Scissors className="h-5 w-5 text-gray-400 mr-3" />
-                <div>
-                  <div className="font-medium">{selectedServiceObj.name}</div>
-                  <div className="text-sm text-gray-600">
-                    {selectedServiceObj.duration_min} мин • {selectedServiceObj.price_cents / 100} ₽
+  const ConfirmationStep = memo(({ selectedServiceObj, selectedStaffObj, selectedDate, selectedTime, selectedLocation, onBooking }: {
+    selectedServiceObj: Service | null
+    selectedStaffObj: Staff | null
+    selectedDate: string
+    selectedTime: string
+    selectedLocation: Location | null
+    onBooking: (customerName: string, customerPhone: string) => void
+  }) => {
+    const [formData, setFormData] = useState({ customer_name: '', customer_phone: '' })
+    
+    const debouncedSetFormData = useCallback(
+      debounce((field: 'customer_name' | 'customer_phone', value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }))
+      }, 1),
+      []
+    )
+
+    const handleInputChange = (field: 'customer_name' | 'customer_phone', value: string) => {
+      debouncedSetFormData(field, value)
+    }
+
+    return (
+      <div className="p-4">
+        <h3 className="text-xl font-bold mb-4">Подтверждение записи</h3>
+        
+        <div className="space-y-4 mb-6">
+          <div className="border rounded-lg overflow-hidden">
+            <div className="p-4 border-b bg-gray-50">
+              <h4 className="font-medium">Детали записи</h4>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              {selectedServiceObj && (
+                <div className="flex items-center">
+                  <Scissors className="h-5 w-5 text-gray-400 mr-3" />
+                  <div>
+                    <div className="font-medium">{selectedServiceObj.name}</div>
+                    <div className="text-sm text-gray-600">
+                      {selectedServiceObj.duration_min} мин • {selectedServiceObj.price_cents / 100} ₽
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            {selectedStaffObj && (
-              <div className="flex items-center">
-                <User className="h-5 w-5 text-gray-400 mr-3" />
-                <div>
-                  <div className="font-medium">{selectedStaffObj.full_name}</div>
-                  <div className="text-sm text-gray-600">{selectedStaffObj.position}</div>
+              )}
+              
+              {selectedStaffObj && (
+                <div className="flex items-center">
+                  <User className="h-5 w-5 text-gray-400 mr-3" />
+                  <div>
+                    <div className="font-medium">{selectedStaffObj.full_name}</div>
+                    <div className="text-sm text-gray-600">{selectedStaffObj.position}</div>
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            {selectedDate && selectedTime && (
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 text-gray-400 mr-3" />
-                <div>
-                  <div className="font-medium">{formatDate(selectedDate)}</div>
-                  <div className="text-sm text-gray-600">{selectedTime}</div>
+              )}
+              
+              {selectedDate && selectedTime && (
+                <div className="flex items-center">
+                  <Calendar className="h-5 w-5 text-gray-400 mr-3" />
+                  <div>
+                    <div className="font-medium">{formatDate(selectedDate)}</div>
+                    <div className="text-sm text-gray-600">{selectedTime}</div>
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            {selectedLocation && (
-              <div className="flex items-center">
-                <Building className="h-5 w-5 text-gray-400 mr-3" />
-                <div>
-                  <div className="font-medium">{selectedLocation.name}</div>
-                  <div className="text-sm text-gray-600">{selectedLocation.address}</div>
+              )}
+              
+              {selectedLocation && (
+                <div className="flex items-center">
+                  <Building className="h-5 w-5 text-gray-400 mr-3" />
+                  <div>
+                    <div className="font-medium">{selectedLocation.name}</div>
+                    <div className="text-sm text-gray-600">{selectedLocation.address}</div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="border rounded-lg overflow-hidden">
-          <div className="p-4 border-b bg-gray-50">
-            <h4 className="font-medium">Контактные данные</h4>
+              )}
+            </div>
           </div>
           
-          <div className="p-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="customerName">Ваше имя</Label>
-              <Input
-                id="customerName"
-                ref={nameInputRef}
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Введите ваше имя"
-              />
+          <div className="border rounded-lg overflow-hidden">
+            <div className="p-4 border-b bg-gray-50">
+              <h4 className="font-medium">Контактные данные</h4>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="customerPhone">Телефон</Label>
-              <PhoneInput
-                ref={phoneInputRef}
-                value={customerPhone}
-                onChange={setCustomerPhone}
-                placeholder="+7 (999) 123-45-67"
-                defaultCountry="ru"
-              />
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="customerName">Ваше имя</Label>
+                <Input
+                  id="customerName"
+                  ref={nameInputRef}
+                  value={formData.customer_name}
+                  onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                  placeholder="Введите ваше имя"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="customerPhone">Телефон</Label>
+                <PhoneInput
+                  ref={phoneInputRef}
+                  value={formData.customer_phone}
+                  onChange={(value) => handleInputChange('customer_phone', value)}
+                  placeholder="+7 (999) 123-45-67"
+                />
+              </div>
             </div>
           </div>
+          
+          <Button 
+            className="w-full py-6 text-lg" 
+            onClick={() => onBooking(formData.customer_name, formData.customer_phone)}
+            disabled={bookingLoading || !formData.customer_name || !formData.customer_phone}
+          >
+            {bookingLoading ? 'Создание записи...' : 'Записаться'}
+          </Button>
         </div>
-        
-        <Button 
-          className="w-full py-6 text-lg" 
-          onClick={handleBooking}
-          disabled={bookingLoading || !customerName || !customerPhone}
-        >
-          {bookingLoading ? 'Создание записи...' : 'Записаться'}
-        </Button>
       </div>
-    </div>
-  )
+    )
+  })
 
   const isPrevMonthDisabled = () => {
     const today = new Date()
@@ -1203,7 +1204,16 @@ export function Widget({ businessId, locationId: propLocationId, businessName = 
       
       {currentStep === 'location' && <LocationStep />}
       {currentStep === 'selection' && <SelectionStep />}
-      {currentStep === 'confirmation' && <ConfirmationStep />}
+      {currentStep === 'confirmation' && (
+        <ConfirmationStep
+          selectedServiceObj={selectedServiceObj}
+          selectedStaffObj={selectedStaffObj}
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          selectedLocation={selectedLocation}
+          onBooking={handleBooking}
+        />
+      )}
       
       <div className="p-4 border-t text-center text-xs text-gray-500">
         Работает на <span className="font-medium">My Place</span>

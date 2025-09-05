@@ -9,6 +9,18 @@ type Service struct {
 	Name        string
 	DurationMin int
 	PriceCents  int
+	CategoryID  string 
+	OrderIndex  int  
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+
+type ServiceCategory struct {
+	ID         string
+	BusinessID string
+	Name       string
+	OrderIndex int     
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }

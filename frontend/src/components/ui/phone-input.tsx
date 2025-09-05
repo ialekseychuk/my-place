@@ -13,7 +13,7 @@ export interface PhoneInputProps {
 }
 
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
-  ({ value, onChange, placeholder, disabled, className, defaultCountry = 'ru' }, ref) => {
+  ({ value, onChange, placeholder, disabled, className, defaultCountry = 'by' }, ref) => {
     return (
       <ReactPhoneInput
         defaultCountry={defaultCountry}

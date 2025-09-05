@@ -16,15 +16,18 @@ interface FormState extends CreateServiceRequest {
 interface AddServiceFormProps {
   onSubmit: (data: CreateServiceRequest) => Promise<void>
   loading?: boolean
+  onCancel?: () => void
+  initialCategoryId?: string
 }
 
-export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProps) {
+export function AddServiceForm({ onSubmit, loading = false, onCancel, initialCategoryId }: AddServiceFormProps) {
   const { locations, currentLocation } = useLocation()
   const [formData, setFormData] = useState<FormState>({
     name: '',
     duration_min: 0,
     price_cents: 0,
     location_id: currentLocation?.id,
+    category_id: initialCategoryId,
     priceInputValue: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -69,7 +72,8 @@ export function AddServiceForm({ onSubmit, loading = false }: AddServiceFormProp
         name: formData.name,
         duration_min: formData.duration_min,
         price_cents: priceCents,
-        location_id: formData.location_id
+        location_id: formData.location_id,
+        category_id: formData.category_id
       })
       // Reset form on success
       setFormData({
