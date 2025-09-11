@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/ialekseychuk/my-place/internal/config"
+	"github.com/ialekseychuk/my-place/internal/infrastructure/grpcclient"
 	"github.com/ialekseychuk/my-place/internal/repository"
 	"github.com/ialekseychuk/my-place/internal/server/handlers"
 	"github.com/ialekseychuk/my-place/internal/server/middleware"
 	"github.com/ialekseychuk/my-place/internal/usecase"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
@@ -28,15 +29,47 @@ import (
 // @name Authorization
 
 func main() {
-	_ = godotenv.Load()
 	logger, _ := zap.NewDevelopment()
+
+	config, err := config.LoadConfig()
+	if err != nil {
+		logger.Fatal("error loading config", zap.Error(err))
+	}
 	defer logger.Sync()
 
-	db, err := pgxpool.New(context.Background(), os.Getenv("POSTGRES_DSN"))
+	db, err := pgxpool.New(context.Background(), config.POSTGRES_DSN)
 	if err != nil {
 		logger.Fatal("error connecting to db", zap.Error(err))
 	}
+
+	logger.Info("config", zap.Any("config", config))
+
 	defer db.Close()
+
+	authCli, cleanup, err := grpcclient.NewIdentityClient(grpcclient.Params{
+		Target: config.IdentityDSN,
+		Logger: logger,
+	})
+	if err != nil {
+		logger.Fatal("error creating auth client", zap.Error(err))
+	}
+	defer cleanup()
+
+	logger.Info("Successfully created identity gRPC client", zap.String("target", config.IdentityDSN))
+
+	businessCli, cleanup, err := grpcclient.NewBusinessClient(grpcclient.Params{
+		Target: config.BusinessDSN,
+		Logger: logger,
+	})
+
+	if err != nil {
+		logger.Fatal("error creating business client", zap.Error(err))
+	}
+
+	defer cleanup()
+
+	logger.Info("Successfully created business gRPC client", zap.String("target", config.BusinessDSN))
+
 	// repos
 	businesRepo := repository.NewBusinessRepository(db)
 	userRepo := repository.NewUserRepository(db)
@@ -51,7 +84,7 @@ func main() {
 
 	// usecases
 	ucBusines := usecase.NewBusinessUseCase(businesRepo, locationRepo, userRepo, workingHoursRepo)
-	authService := usecase.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
+	//authService := usecase.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
 
 	ucService := usecase.NewServiceUseCase(serviceRepo)
 	ucStaff := usecase.NewStaffUseCase(staffRepo, staffServiceRepo, serviceRepo)
@@ -62,8 +95,8 @@ func main() {
 
 	//handlers
 
-	bh := handlers.NewBusinessHandler(ucBusines)
-	authHandler := handlers.NewAuthHandler(authService)
+	bh := handlers.NewBusinessHandler(ucBusines, businessCli)
+	authHandler := handlers.NewAuthHandler(authCli)
 
 	serviceHandler := handlers.NewServiceHandler(ucService)
 	staffHandler := handlers.NewStaffHandler(ucStaff)
@@ -71,7 +104,7 @@ func main() {
 	bookingHandler := handlers.NewBookingHandler(ucBooking)
 	scheduleHandler := handlers.NewScheduleHandler(scheduleService)
 	clientHandler := handlers.NewClientHandler(clientService)
-	locationHandler := handlers.NewLocationHandler(locationService)
+	locationHandler := handlers.NewLocationHandler(locationService, businessCli)
 	widgetHandler := handlers.NewWidgetHandler(locationService, ucService, ucStaff, scheduleService, ucBooking) // Add widget handler with booking service
 
 	r := chi.NewRouter()
@@ -79,7 +112,7 @@ func main() {
 	r.Use(middleware.CORS) // Add CORS middleware
 
 	// JWT middleware
-	jwtMiddleware := middleware.JWTMiddleware(authService)
+	//jwtMiddleware := middleware.JWTMiddleware(authService)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/docs/swagger.json"),
@@ -104,11 +137,10 @@ func main() {
 
 		// Protected routes
 		v1.Group(func(protected chi.Router) {
-			protected.Use(jwtMiddleware)
+			//protected.Use(jwtMiddleware)
 
 			protected.Route("/businesses", func(br chi.Router) {
-				br.Post("/", bh.CreateBusiness)
-
+			
 				br.Route("/{businessID}", func(bir chi.Router) {
 					bir.Group(func(owner chi.Router) {
 						owner.Use(middleware.RequireRole("owner"))

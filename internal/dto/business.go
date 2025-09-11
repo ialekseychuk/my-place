@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type WorkingHoursDTO struct {
 	Start   string `json:"start" validate:"required"`
 	End     string `json:"end" validate:"required"`
@@ -50,7 +52,26 @@ type CreateBusinessRequest struct {
 }
 
 type CreateBusinessResponse struct {
-	BusinessID string `json:"business_id"`
-	UserID     string `json:"user_id"`
-	Message    string `json:"message"`
+	BusinessID string        `json:"business_id"`
+	UserID     string        `json:"user_id"`
+	Token      LoginResponse `json:"auth"`
+}
+
+type Business struct {
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	BusinessType string    `json:"business_type"`
+	Currency     string    `json:"currency"`
+	Timezone     string    `json:"timezone"`
+	OwnerID      string    `json:"ownerId"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type BusinessCreateResponse struct {
+	Business  *Business            `json:"business"`
+	User      *UserProfileResponse `json:"owner"`
+	AuthToken *AuthToken           `json:"auth_token"`
+	Message   string               `json:"message"`
 }

@@ -84,8 +84,8 @@ func (h *WidgetHandler) GetLocations(w http.ResponseWriter, r *http.Request) {
 			City:        location.City,
 			ContactInfo: location.ContactInfo,
 			Timezone:    location.Timezone,
-			CreatedAt:   location.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:   location.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			CreatedAt:   location.CreatedAt,
+			UpdatedAt:   location.UpdatedAt,
 		}
 	}
 

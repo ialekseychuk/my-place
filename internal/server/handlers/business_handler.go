@@ -1,67 +1,38 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/ialekseychuk/my-place/internal/dto"
+	"github.com/ialekseychuk/my-place/internal/infrastructure/grpcclient"
 	"github.com/ialekseychuk/my-place/internal/usecase"
 	"github.com/ialekseychuk/my-place/pkg/validate"
 )
 
 type BusinessHandler struct {
-	uc *usecase.BusinessUseCase
+	uc           *usecase.BusinessUseCase
+	businessGrpc grpcclient.BusinessClient
 }
 
-func NewBusinessHandler(uc *usecase.BusinessUseCase) *BusinessHandler {
+func NewBusinessHandler(uc *usecase.BusinessUseCase, bg grpcclient.BusinessClient) *BusinessHandler {
 	return &BusinessHandler{
-		uc: uc,
+		uc:           uc,
+		businessGrpc: bg,
 	}
 }
 
 func (h *BusinessHandler) Routes() chi.Router {
 	r := chi.NewRouter()
-	r.Post("/", h.CreateBusiness)
 	r.Post("/register", h.RegisterBusiness)
 	r.Get("/{id}", h.GetBusiness)
 	return r
 }
 
-// @Summary Create a new Business
-// @Description Creates a new company
-// @Tags Business
-// @Accept json
-// @Produce json
-// @Param company body dto.CreateBusinessRequest true "Business object"
-// @Success 201
-// @Failure 422 {object} map[string]string "Validation errors"
-// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
-// @Failure 403 {object} dto.ErrorResponse "Forbidden"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
-// @Security Bearer
-// @Router /api/v1/businesses [post]
-func (h *BusinessHandler) CreateBusiness(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateBusinessRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if errs := validate.Struct(req); errs != nil {
-		ValidationErrorsResponse(w, http.StatusUnprocessableEntity, errs)
-		return
-	}
-	b, err := h.uc.CreateBusiness(r.Context(), req.BusinessName, req.Timezone)
-	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "internal server error")
-
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(b)
-
-}
 
 // @Summary Register a new Business with owner and settings
 // @Description Creates a new business with complete registration including owner and working hours
@@ -69,7 +40,7 @@ func (h *BusinessHandler) CreateBusiness(w http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Param registration body dto.CreateBusinessRequest true "Business registration object"
-// @Success 201 {object} dto.CreateBusinessResponse
+// @Success 201 {object} dto.BusinessCreateResponse
 // @Failure 422 {object} map[string]string "Validation errors"
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Router /api/v1/businesses/register [post]
@@ -80,16 +51,29 @@ func (h *BusinessHandler) RegisterBusiness(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	log.Printf("RegisterBusiness: Request body decoded successfully, business name: %s", req.BusinessName)
+
 	if errs := validate.Struct(req); errs != nil {
-		ValidationErrorsResponse(w, http.StatusBadRequest, errs)
+		log.Printf("RegisterBusiness validation: %v", errs)
+		ValidationErrorsResponse(w, http.StatusUnprocessableEntity, errs)
 		return
 	}
 
-	resp, err := h.uc.RegisterBusiness(r.Context(), req)
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(r.Context(), 1000*time.Second)
+	defer cancel()
+
+	log.Printf("RegisterBusiness: Calling businessGrpc.CreateBusiness with business name: %s", req.BusinessName)
+
+	resp, err := h.businessGrpc.RegisterBusiness(ctx, &req)
 	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "Registration failed")
+		log.Printf("RegisterBusiness gRPC error: %v", err)
+		code, msg := grpcclient.GRPCErrorToHttp(err)
+		ErrorResponse(w, code, msg)
 		return
 	}
+
+	log.Printf("RegisterBusiness: Sending response back to client")
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resp)
@@ -101,7 +85,7 @@ func (h *BusinessHandler) RegisterBusiness(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Param businessID path string true "Business ID"
-// @Success 200
+// @Success 200 {object} dto.BusinessCreateResponse
 // @Failure 404
 // @Failure 422 {object} map[string]string "Validation errors"
 // @Failure 401 {object} dto.ErrorResponse "Unauthorized"
@@ -111,11 +95,14 @@ func (h *BusinessHandler) RegisterBusiness(w http.ResponseWriter, r *http.Reques
 // @Router /api/v1/businesses/{businessID} [get]
 func (h *BusinessHandler) GetBusiness(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "businessID")
-	b, err := h.uc.GetById(r.Context(), id)
+
+	resp, err := h.businessGrpc.GetBusiness(r.Context(), id)
 	if err != nil {
-		ErrorResponse(w, http.StatusNotFound, "Not found")
+		code, msg := grpcclient.GRPCErrorToHttp(err)
+		ErrorResponse(w, code, msg)
 		return
 	}
 
-	json.NewEncoder(w).Encode(b)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(resp)
 }

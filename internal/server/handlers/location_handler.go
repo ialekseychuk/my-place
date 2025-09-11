@@ -5,19 +5,21 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/ialekseychuk/my-place/internal/domain"
 	"github.com/ialekseychuk/my-place/internal/dto"
+	"github.com/ialekseychuk/my-place/internal/infrastructure/grpcclient"
 	"github.com/ialekseychuk/my-place/internal/usecase"
 	"github.com/ialekseychuk/my-place/pkg/validate"
 )
 
 type LocationHandler struct {
 	locationService *usecase.LocationService
+	businessCli     grpcclient.BusinessClient
 }
 
-func NewLocationHandler(locationService *usecase.LocationService) *LocationHandler {
+func NewLocationHandler(locationService *usecase.LocationService, businessCli grpcclient.BusinessClient) *LocationHandler {
 	return &LocationHandler{
 		locationService: locationService,
+		businessCli:     businessCli,
 	}
 }
 
@@ -70,8 +72,8 @@ func (h *LocationHandler) GetLocations(w http.ResponseWriter, r *http.Request) {
 			City:        location.City,
 			ContactInfo: location.ContactInfo,
 			Timezone:    location.Timezone,
-			CreatedAt:   location.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:   location.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			CreatedAt:   location.CreatedAt,
+			UpdatedAt:   location.UpdatedAt,
 		}
 	}
 
@@ -102,39 +104,22 @@ func (h *LocationHandler) CreateLocation(w http.ResponseWriter, r *http.Request)
 		ErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+	req.BusinessID = businessID
 
 	if errs := validate.Struct(req); errs != nil {
 		ValidationErrorsResponse(w, http.StatusBadRequest, errs)
 		return
 	}
-	
-	location := &domain.Location{
-		Name:        req.Name,
-		Address:     req.Address,
-		City:        req.City,
-		ContactInfo: req.ContactInfo,
-		Timezone:    req.Timezone,
-	}
 
-	if err := h.locationService.CreateLocation(r.Context(), businessID, location); err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, err.Error())
+	resp, err := h.businessCli.CreateLocation(r.Context(), &req)
+	if err != nil {
+		code, msg := grpcclient.GRPCErrorToHttp(err)
+		ErrorResponse(w, code, msg)
 		return
 	}
 
-	response := dto.LocationResponse{
-		ID:          location.ID,
-		BusinessID:  location.BusinessID,
-		Name:        location.Name,
-		Address:     location.Address,
-		City:        location.City,
-		ContactInfo: location.ContactInfo,
-		Timezone:    location.Timezone,
-		CreatedAt:   location.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   location.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
-
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // @Summary Get a location by ID
@@ -151,30 +136,26 @@ func (h *LocationHandler) CreateLocation(w http.ResponseWriter, r *http.Request)
 // @Router /api/v1/businesses/{businessID}/locations/{locationID} [get]
 func (h *LocationHandler) GetLocation(w http.ResponseWriter, r *http.Request) {
 	locationID := chi.URLParam(r, "locationID")
+	businessID := chi.URLParam(r, "businessID")
+	
 	if locationID == "" {
 		ErrorResponse(w, http.StatusBadRequest, "locationID is required")
 		return
 	}
 
-	location, err := h.locationService.GetLocationByID(r.Context(), locationID)
+	resp, err := h.businessCli.GetLocation(r.Context(), locationID)
 	if err != nil {
+		code, msg := grpcclient.GRPCErrorToHttp(err)
+		ErrorResponse(w, code, msg)
+		return
+	}
+
+	if resp.BusinessID != businessID {
 		ErrorResponse(w, http.StatusNotFound, "Location not found")
 		return
 	}
 
-	response := dto.LocationResponse{
-		ID:          location.ID,
-		BusinessID:  location.BusinessID,
-		Name:        location.Name,
-		Address:     location.Address,
-		City:        location.City,
-		ContactInfo: location.ContactInfo,
-		Timezone:    location.Timezone,
-		CreatedAt:   location.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   location.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
-
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // @Summary Update a location
@@ -208,8 +189,6 @@ func (h *LocationHandler) UpdateLocation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-
-
 	location, err := h.locationService.GetLocationByID(r.Context(), locationID)
 	if err != nil {
 		ErrorResponse(w, http.StatusNotFound, "Location not found")
@@ -235,8 +214,8 @@ func (h *LocationHandler) UpdateLocation(w http.ResponseWriter, r *http.Request)
 		City:        location.City,
 		ContactInfo: location.ContactInfo,
 		Timezone:    location.Timezone,
-		CreatedAt:   location.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   location.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt:   location.CreatedAt,
+		UpdatedAt:   location.UpdatedAt,
 	}
 
 	json.NewEncoder(w).Encode(response)

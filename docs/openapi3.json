@@ -103,6 +103,23 @@
         ],
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.AuthToken": {
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.AvailabilityLogResponse": {
         "properties": {
           "action": {
@@ -130,6 +147,20 @@
             "type": "string"
           },
           "staff_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.AvailableStaffResponse": {
+        "properties": {
+          "is_available": {
+            "type": "boolean"
+          },
+          "staff_id": {
+            "type": "string"
+          },
+          "staff_name": {
             "type": "string"
           }
         },
@@ -242,6 +273,55 @@
         ],
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.Business": {
+        "properties": {
+          "business_type": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.BusinessCreateResponse": {
+        "properties": {
+          "auth_token": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AuthToken"
+          },
+          "business": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.Business"
+          },
+          "message": {
+            "type": "string"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UserProfileResponse"
+          }
+        },
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.BusinessScheduleStatsResponse": {
         "properties": {
           "average_hours_per_staff": {
@@ -276,6 +356,75 @@
           },
           "total_working_hours": {
             "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.BusinessServicesResponse": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CategoryWithServices"
+            },
+            "type": "array"
+          },
+          "uncategorized_services": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.CategoryResponse": {
+        "properties": {
+          "business_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "order_index": {
+            "type": "integer"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.CategoryWithServices": {
+        "properties": {
+          "business_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "order_index": {
+            "type": "integer"
+          },
+          "services": {
+            "items": {
+              "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+            },
+            "type": "array"
+          },
+          "updated_at": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -491,18 +640,21 @@
         ],
         "type": "object"
       },
-      "github_com_ialekseychuk_my-place_internal_dto.CreateBusinessResponse": {
+      "github_com_ialekseychuk_my-place_internal_dto.CreateCategoryRequest": {
         "properties": {
-          "business_id": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 3,
             "type": "string"
           },
-          "message": {
-            "type": "string"
-          },
-          "user_id": {
-            "type": "string"
+          "order_index": {
+            "minimum": 0,
+            "type": "integer"
           }
         },
+        "required": [
+          "name"
+        ],
         "type": "object"
       },
       "github_com_ialekseychuk_my-place_internal_dto.CreateScheduleTemplateRequest": {
@@ -549,6 +701,10 @@
             "maxLength": 100,
             "minLength": 3,
             "type": "string"
+          },
+          "order_index": {
+            "minimum": 0,
+            "type": "integer"
           },
           "price_cents": {
             "minimum": 1,
@@ -1019,6 +1175,9 @@
           "name": {
             "type": "string"
           },
+          "order_index": {
+            "type": "integer"
+          },
           "price_cents": {
             "type": "integer"
           },
@@ -1341,6 +1500,35 @@
         },
         "type": "object"
       },
+      "github_com_ialekseychuk_my-place_internal_dto.UpdateCategoryRequest": {
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 3,
+            "type": "string"
+          },
+          "order_index": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "github_com_ialekseychuk_my-place_internal_dto.UpdateOrderRequest": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "ids"
+        ],
+        "type": "object"
+      },
       "github_com_ialekseychuk_my-place_internal_dto.UpdateScheduleTemplateRequest": {
         "properties": {
           "description": {
@@ -1377,6 +1565,10 @@
             "maxLength": 100,
             "minLength": 3,
             "type": "string"
+          },
+          "order_index": {
+            "minimum": 0,
+            "type": "integer"
           },
           "price_cents": {
             "minimum": 1,
@@ -1514,9 +1706,6 @@
       },
       "github_com_ialekseychuk_my-place_internal_dto.UserProfileResponse": {
         "properties": {
-          "business_id": {
-            "type": "string"
-          },
           "created_at": {
             "type": "string"
           },
@@ -1979,7 +2168,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateBusinessResponse"
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.BusinessCreateResponse"
                 }
               }
             },
@@ -2100,6 +2289,14 @@
             "in": "path",
             "name": "businessID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location id",
+            "in": "query",
+            "name": "location_id",
             "schema": {
               "type": "string"
             }
@@ -2497,6 +2694,342 @@
         ]
       }
     },
+    "/api/v1/businesses/{businessID}/locations": {
+      "get": {
+        "description": "Get all locations for a business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationListResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get all locations for a business",
+        "tags": [
+          "Locations"
+        ]
+      },
+      "post": {
+        "description": "Create a new location for a business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationRequest"
+              }
+            }
+          },
+          "description": "Location data",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationResponse"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create a new location",
+        "tags": [
+          "locations"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/locations/{locationID}": {
+      "delete": {
+        "description": "Delete a location by ID",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID",
+            "in": "path",
+            "name": "locationID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Delete a location",
+        "tags": [
+          "locations"
+        ]
+      },
+      "get": {
+        "description": "Get a specific location by its ID",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID",
+            "in": "path",
+            "name": "locationID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get a location by ID",
+        "tags": [
+          "locations"
+        ]
+      },
+      "put": {
+        "description": "Update an existing location",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID",
+            "in": "path",
+            "name": "locationID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationRequest"
+              }
+            }
+          },
+          "description": "Location data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Update a location",
+        "tags": [
+          "locations"
+        ]
+      }
+    },
     "/api/v1/businesses/{businessID}/schedule/availability/available-staff": {
       "get": {
         "description": "Get list of available staff for a specific time slot",
@@ -2523,7 +3056,6 @@
             "description": "Start time (HH:MM)",
             "in": "query",
             "name": "start_time",
-            "required": true,
             "schema": {
               "type": "string"
             }
@@ -2532,7 +3064,14 @@
             "description": "End time (HH:MM)",
             "in": "query",
             "name": "end_time",
-            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID",
+            "in": "query",
+            "name": "location_id",
             "schema": {
               "type": "string"
             }
@@ -3748,6 +4287,14 @@
             "in": "path",
             "name": "staffID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID",
+            "in": "query",
+            "name": "location_id",
             "schema": {
               "type": "string"
             }
@@ -5059,6 +5606,14 @@
             }
           },
           {
+            "description": "Location id to filter",
+            "in": "query",
+            "name": "location_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "Staff IDs to filter",
             "in": "query",
             "name": "staff_ids",
@@ -5307,6 +5862,14 @@
             }
           },
           {
+            "description": "Location id to filter",
+            "in": "query",
+            "name": "location_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "Staff IDs to filter",
             "in": "query",
             "name": "staff_ids",
@@ -5541,6 +6104,620 @@
         ]
       }
     },
+    "/api/v1/businesses/{businessID}/services/categories": {
+      "get": {
+        "description": "Get all service categories for a business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CategoryResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get categories by business",
+        "tags": [
+          "ServiceCategory"
+        ]
+      },
+      "post": {
+        "description": "Creates a new service category for business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CreateCategoryRequest"
+              }
+            }
+          },
+          "description": "Category object",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CategoryResponse"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create a new service category",
+        "tags": [
+          "ServiceCategory"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/services/categories/order": {
+      "put": {
+        "description": "Update the order of categories for drag and drop functionality",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateOrderRequest"
+              }
+            }
+          },
+          "description": "Category IDs in the desired order",
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update categories order",
+        "tags": [
+          "ServiceCategory"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/services/categories/{categoryID}": {
+      "delete": {
+        "description": "Delete a service category by ID",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Category ID",
+            "in": "path",
+            "name": "categoryID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Category not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Delete category",
+        "tags": [
+          "ServiceCategory"
+        ]
+      },
+      "get": {
+        "description": "Get a specific service category by ID",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Category ID",
+            "in": "path",
+            "name": "categoryID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CategoryResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Category not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get category by ID",
+        "tags": [
+          "ServiceCategory"
+        ]
+      },
+      "put": {
+        "description": "Update service category information",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Category ID",
+            "in": "path",
+            "name": "categoryID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateCategoryRequest"
+              }
+            }
+          },
+          "description": "Category update data",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.CategoryResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Category not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update category",
+        "tags": [
+          "ServiceCategory"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/services/categories/{categoryID}/services": {
+      "get": {
+        "description": "Get all services in a specific category",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Category ID",
+            "in": "path",
+            "name": "categoryID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Category not found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get services by category",
+        "tags": [
+          "ServiceCategory"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/services/order": {
+      "put": {
+        "description": "Update the order of services for drag and drop functionality",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.UpdateOrderRequest"
+              }
+            }
+          },
+          "description": "Service IDs in the desired order",
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Validation errors"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update services order",
+        "tags": [
+          "Service"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/services/with-categories": {
+      "get": {
+        "description": "Get all services for a business grouped by categories",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.BusinessServicesResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get services with categories",
+        "tags": [
+          "Service"
+        ]
+      }
+    },
     "/api/v1/businesses/{businessID}/services/{serviceID}": {
       "delete": {
         "description": "Delete a service by ID",
@@ -5759,6 +6936,66 @@
         "summary": "Update service",
         "tags": [
           "Service"
+        ]
+      }
+    },
+    "/api/v1/businesses/{businessID}/staff-services": {
+      "get": {
+        "description": "Gets all staff-service assignments for a business",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffServiceResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get all staff services for business",
+        "tags": [
+          "StaffServices"
         ]
       }
     },
@@ -6140,13 +7377,21 @@
     },
     "/api/v1/businesses/{businessID}/staffs": {
       "get": {
-        "description": "get staffs",
+        "description": "get staffs for company or location",
         "parameters": [
           {
             "description": "Business ID",
             "in": "path",
             "name": "businessID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID",
+            "in": "query",
+            "name": "location_id",
             "schema": {
               "type": "string"
             }
@@ -6484,13 +7729,174 @@
         ]
       }
     },
-    "/api/v1/locations": {
+    "/api/v1/widget/availability/{businessID}": {
       "get": {
-        "description": "Get all locations for a business",
+        "description": "Get available staff for a business without authentication",
         "parameters": [
           {
             "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Date to check availability (YYYY-MM-DD)",
             "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start time to check availability (HH:MM)",
+            "in": "query",
+            "name": "start_time",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End time to check availability (HH:MM)",
+            "in": "query",
+            "name": "end_time",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID to filter staff",
+            "in": "query",
+            "name": "location_id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.AvailableStaffResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get available staff for a business (public endpoint for widget)",
+        "tags": [
+          "Widget"
+        ]
+      }
+    },
+    "/api/v1/widget/bookings/{businessID}": {
+      "get": {
+        "description": "Get bookings for a staff member on a specific date without authentication",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Staff ID",
+            "in": "query",
+            "name": "staff_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.BookingResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get bookings for a staff member on a specific date (public endpoint for widget)",
+        "tags": [
+          "Widget"
+        ]
+      }
+    },
+    "/api/v1/widget/locations/{businessID}": {
+      "get": {
+        "description": "Get all locations for a business without authentication",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
             "name": "businessID",
             "required": true,
             "schema": {
@@ -6530,17 +7936,82 @@
             "description": "Internal Server Error"
           }
         },
-        "summary": "Get all locations for a business",
+        "summary": "Get all locations for a business (public endpoint for widget)",
         "tags": [
-          "locations"
+          "Widget"
         ]
-      },
-      "post": {
-        "description": "Create a new location for a business",
+      }
+    },
+    "/api/v1/widget/services/{businessID}": {
+      "get": {
+        "description": "Get all services for a business without authentication",
         "parameters": [
           {
             "description": "Business ID",
+            "in": "path",
+            "name": "businessID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID to filter services",
             "in": "query",
+            "name": "location_id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ServiceResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get all services for a business (public endpoint for widget)",
+        "tags": [
+          "Widget"
+        ]
+      }
+    },
+    "/api/v1/widget/staff-services/{businessID}": {
+      "get": {
+        "description": "Get all staff-service assignments for a business without authentication",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
             "name": "businessID",
             "required": true,
             "schema": {
@@ -6548,19 +8019,19 @@
             }
           }
         ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/github_com_ialekseychuk_my-place_internal_dto.LocationRequest"
-        },
         "responses": {
-          "201": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationResponse"
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffServiceResponse"
+                  },
+                  "type": "array"
                 }
               }
             },
-            "description": "Created"
+            "description": "OK"
           },
           "400": {
             "content": {
@@ -6583,74 +8054,29 @@
             "description": "Internal Server Error"
           }
         },
-        "summary": "Create a new location",
+        "summary": "Get all staff-service assignments for a business (public endpoint for widget)",
         "tags": [
-          "locations"
+          "Widget"
         ]
       }
     },
-    "/api/v1/locations/{locationID}": {
-      "delete": {
-        "description": "Delete a location by ID",
-        "parameters": [
-          {
-            "description": "Location ID",
-            "in": "path",
-            "name": "locationID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Bad Request"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Not Found"
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Internal Server Error"
-          }
-        },
-        "summary": "Delete a location",
-        "tags": [
-          "locations"
-        ]
-      },
+    "/api/v1/widget/staff/{businessID}": {
       "get": {
-        "description": "Get a specific location by its ID",
+        "description": "Get all staff for a business without authentication",
         "parameters": [
           {
-            "description": "Location ID",
+            "description": "Business ID",
             "in": "path",
-            "name": "locationID",
+            "name": "businessID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Location ID to filter staff",
+            "in": "query",
+            "name": "location_id",
             "schema": {
               "type": "string"
             }
@@ -6661,7 +8087,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationResponse"
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.StaffResponse"
+                  },
+                  "type": "array"
                 }
               }
             },
@@ -6677,16 +8106,6 @@
             },
             "description": "Bad Request"
           },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Not Found"
-          },
           "500": {
             "content": {
               "application/json": {
@@ -6698,41 +8117,41 @@
             "description": "Internal Server Error"
           }
         },
-        "summary": "Get a location by ID",
+        "summary": "Get all staff for a business (public endpoint for widget)",
         "tags": [
-          "locations"
+          "Widget"
         ]
-      },
-      "put": {
-        "description": "Update an existing location",
+      }
+    },
+    "/api/v1/widget/staff/{staffID}/day": {
+      "get": {
+        "description": "Get staff day schedule without authentication",
         "parameters": [
           {
-            "description": "Location ID",
+            "description": "Staff ID",
             "in": "path",
-            "name": "locationID",
+            "name": "staffID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "date",
             "required": true,
             "schema": {
               "type": "string"
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationRequest"
-              }
-            }
-          },
-          "description": "Location data",
-          "required": true
-        },
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.LocationResponse"
+                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.DayScheduleResponse"
                 }
               }
             },
@@ -6748,16 +8167,6 @@
             },
             "description": "Bad Request"
           },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github_com_ialekseychuk_my-place_internal_dto.ErrorResponse"
-                }
-              }
-            },
-            "description": "Not Found"
-          },
           "500": {
             "content": {
               "application/json": {
@@ -6769,16 +8178,16 @@
             "description": "Internal Server Error"
           }
         },
-        "summary": "Update a location",
+        "summary": "Get staff day schedule (public endpoint for widget)",
         "tags": [
-          "locations"
+          "Widget"
         ]
       }
     }
   },
   "servers": [
     {
-      "url": "/api"
+      "url": "http:/localhost:81"
     }
   ]
 }

@@ -61,16 +61,16 @@ func (uc *BusinessUseCase) RegisterBusiness(ctx context.Context, req dto.CreateB
 		Name:                     req.BusinessName,
 		BusinessType:             req.BusinessType,
 		Description:              req.Description,
-		Address:                  req.Address,
-		City:                     req.City,
-		Phone:                    req.Phone,
-		Email:                    req.Email,
-		Website:                  req.Website,
+		// Address:                  req.Address,
+		// City:                     req.City,
+		// Phone:                    req.Phone,
+		// Email:                    req.Email,
+		// Website:                  req.Website,
 		Timezone:                 req.Timezone,
 		Currency:                 req.Currency,
-		EnableOnlineBooking:      req.EnableOnlineBooking,
-		EnableSMSNotifications:   req.EnableSMSNotifications,
-		EnableEmailNotifications: req.EnableEmailNotifications,
+		// EnableOnlineBooking:      req.EnableOnlineBooking,
+		// EnableSMSNotifications:   req.EnableSMSNotifications,
+		// EnableEmailNotifications: req.EnableEmailNotifications,
 	}
 
 	if err := uc.businessRepo.Create(ctx, business); err != nil {
@@ -118,7 +118,7 @@ func (uc *BusinessUseCase) RegisterBusiness(ctx context.Context, req dto.CreateB
 	return &dto.CreateBusinessResponse{
 		BusinessID: businessID,
 		UserID:     userID,
-		Message:    "Business registration successful",
+		// Message:    "Business registration successful",
 	}, nil
 }
 

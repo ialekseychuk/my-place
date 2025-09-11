@@ -3,10 +3,10 @@ package middleware
 import (
 	"context"
 	"net/http"
-	"strings"
+	// "strings"
 
 	"github.com/ialekseychuk/my-place/internal/domain"
-	"github.com/ialekseychuk/my-place/internal/usecase"
+	// "github.com/ialekseychuk/my-place/internal/usecase"
 )
 
 type contextKey string
@@ -16,36 +16,36 @@ const (
 )
 
 // JWTMiddleware validates JWT tokens and adds user to request context
-func JWTMiddleware(authService *usecase.AuthService) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Extract token from Authorization header
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				ErrorResponse(w, http.StatusUnauthorized, "Missing authorization header")
-				return
-			}
+// func JWTMiddleware(authService *usecase.AuthService) func(http.Handler) http.Handler {
+// 	return func(next http.Handler) http.Handler {
+// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 			// Extract token from Authorization header
+// 			authHeader := r.Header.Get("Authorization")
+// 			if authHeader == "" {
+// 				ErrorResponse(w, http.StatusUnauthorized, "Missing authorization header")
+// 				return
+// 			}
 
-			// Validate Bearer token format
-			tokenParts := strings.Split(authHeader, " ")
-			if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-				ErrorResponse(w, http.StatusUnauthorized, "Invalid authorization header format")
-				return
-			}
+// 			// Validate Bearer token format
+// 			tokenParts := strings.Split(authHeader, " ")
+// 			if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+// 				ErrorResponse(w, http.StatusUnauthorized, "Invalid authorization header format")
+// 				return
+// 			}
 
-			// Validate JWT token
-			user, err := authService.ValidateToken(tokenParts[1])
-			if err != nil {
-				ErrorResponse(w, http.StatusUnauthorized, "Invalid token")
-				return
-			}
+// 			// Validate JWT token
+// 			user, err := authService.ValidateToken(tokenParts[1])
+// 			if err != nil {
+// 				ErrorResponse(w, http.StatusUnauthorized, "Invalid token")
+// 				return
+// 			}
 
-			// Add user to request context
-			ctx := context.WithValue(r.Context(), UserContextKey, user)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
+// 			// Add user to request context
+// 			ctx := context.WithValue(r.Context(), UserContextKey, user)
+// 			next.ServeHTTP(w, r.WithContext(ctx))
+// 		})
+// 	}
+// }
 
 // RequireRole middleware checks if user has required role
 func RequireRole(role string) func(http.Handler) http.Handler {
