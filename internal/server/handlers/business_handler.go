@@ -10,18 +10,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/ialekseychuk/my-place/internal/dto"
 	"github.com/ialekseychuk/my-place/internal/infrastructure/grpcclient"
-	"github.com/ialekseychuk/my-place/internal/usecase"
 	"github.com/ialekseychuk/my-place/pkg/validate"
 )
 
 type BusinessHandler struct {
-	uc           *usecase.BusinessUseCase
+
 	businessGrpc grpcclient.BusinessClient
 }
 
-func NewBusinessHandler(uc *usecase.BusinessUseCase, bg grpcclient.BusinessClient) *BusinessHandler {
+func NewBusinessHandler( bg grpcclient.BusinessClient) *BusinessHandler {
 	return &BusinessHandler{
-		uc:           uc,
 		businessGrpc: bg,
 	}
 }

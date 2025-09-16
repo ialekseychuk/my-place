@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// var _ companyv1.CompanyClient = (*businessClient)(nil)
+//var _ companyv1.CompanyClient = (*businessClient)(nil)
 
 type businessClient struct {
 	rpc  companyv1.CompanyClient
@@ -21,8 +21,11 @@ type BusinessClient interface {
 	//CreateBusiness(ctx context.Context, dto *dto.CreateBusinessRequest) (*dto.Business, error)
 	GetBusiness(ctx context.Context, id string) (*dto.Business, error)
 	GetBusinessByOwner(ctx context.Context, id string) (*dto.Business, error)
+	
 	CreateLocation(ctx context.Context, in *dto.LocationRequest) (*dto.LocationResponse, error)
 	GetLocation(ctx context.Context, id string) (*dto.LocationResponse, error)
+	GetLocationsByBusiness(ctx context.Context, id string) (*dto.LocationListResponse, error)
+	
 }
 
 func NewBusinessClient(p Params) (BusinessClient, func(), error) {
@@ -39,6 +42,30 @@ func NewBusinessClient(p Params) (BusinessClient, func(), error) {
 
 func (c *businessClient) RegisterBusiness(ctx context.Context, req *dto.CreateBusinessRequest) (*dto.BusinessCreateResponse, error) {
 	log.Printf("gRPC client: Creating business request for %s", req.BusinessName)
+	var shed []*companyv1.DaySchedule
+
+	days := []struct {
+		DayOfWeek string
+		Hours     dto.WorkingHoursDTO
+	}{
+		{"Monday", req.WorkingHours.Monday},
+		{"Tuesday", req.WorkingHours.Tuesday},
+		{"Wednesday", req.WorkingHours.Wednesday},
+		{"Thursday", req.WorkingHours.Thursday},
+		{"Friday", req.WorkingHours.Friday},
+		{"Saturday", req.WorkingHours.Saturday},
+		{"Sunday", req.WorkingHours.Sunday},
+	}
+
+	for _, d := range days {
+		schedule := &companyv1.DaySchedule{
+			DayOfWeek: d.DayOfWeek,
+			Start:     d.Hours.Start,
+			End:       d.Hours.End,
+			Enabled:   d.Hours.Enabled,
+		}
+		shed = append(shed, schedule)
+	}
 
 	b := &companyv1.RegisterBusinessRequest{
 		Name:                     req.BusinessName,
@@ -57,6 +84,7 @@ func (c *businessClient) RegisterBusiness(ctx context.Context, req *dto.CreateBu
 		OwnerEmail:               req.OwnerEmail,
 		OwnerPhone:               req.OwnerPhone,
 		OwnerPassword:            req.OwnerPassword,
+		DefaultSchedule:          shed,
 	}
 
 	log.Printf("gRPC client: Calling RegisterBusiness gRPC method for %s", req.BusinessName)
@@ -129,4 +157,20 @@ func (c *businessClient) GetLocation(ctx context.Context, id string) (*dto.Locat
 	}
 
 	return mapLocationToDTO(resp.GetLocation()), nil
+}
+
+func (c *businessClient) GetLocationsByBusiness(ctx context.Context, id string) (*dto.LocationListResponse, error) {
+	resp, err := c.rpc.GetLocationsByBusiness(ctx, &companyv1.GetBusinessLocationsListRequest{
+		BusinessId: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	 locations := &dto.LocationListResponse{}
+	 resp_loc := resp.GetLocations()
+	 for _, loc := range resp_loc {
+		 locations.Locations = append(locations.Locations, *mapLocationToDTO(loc))
+	 }
+
+	 return locations, nil
 }

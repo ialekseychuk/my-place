@@ -48,36 +48,20 @@ func (h *LocationHandler) Routes() chi.Router {
 // @Router /api/v1/businesses/{businessID}/locations [get]
 func (h *LocationHandler) GetLocations(w http.ResponseWriter, r *http.Request) {
 	businessID := chi.URLParam(r, "businessID")
+
+
 	if businessID == "" {
 		ErrorResponse(w, http.StatusBadRequest, "businessID is required")
 		return
 	}
 
-	locations, err := h.locationService.GetLocationsByBusinessID(r.Context(), businessID)
+	locationsResp, err := h.businessCli.GetLocationsByBusiness(r.Context(), businessID)
 	if err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response := dto.LocationListResponse{
-		Locations: make([]dto.LocationResponse, len(locations)),
-	}
-
-	for i, location := range locations {
-		response.Locations[i] = dto.LocationResponse{
-			ID:          location.ID,
-			BusinessID:  location.BusinessID,
-			Name:        location.Name,
-			Address:     location.Address,
-			City:        location.City,
-			ContactInfo: location.ContactInfo,
-			Timezone:    location.Timezone,
-			CreatedAt:   location.CreatedAt,
-			UpdatedAt:   location.UpdatedAt,
-		}
-	}
-
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(locationsResp)
 }
 
 // @Summary Create a new location

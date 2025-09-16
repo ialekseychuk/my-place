@@ -5,13 +5,12 @@ go 1.24.6
 require (
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-playground/validator/v10 v10.27.0
-	github.com/golang-jwt/jwt/v5 v5.3.0
-	github.com/ialekseychuk/my-place-proto v0.2.2
+	github.com/ialekseychuk/my-place-proto v0.2.4
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/swaggo/http-swagger v1.3.4
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.41.0
-	google.golang.org/grpc v1.75.0
+	google.golang.org/grpc v1.75.1
 )
 
 require (
@@ -44,6 +43,6 @@ require (
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/tools v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250825161204-c5933d9347a5 // indirect
-	google.golang.org/protobuf v1.36.8 // indirect
+	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

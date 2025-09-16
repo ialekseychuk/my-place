@@ -71,9 +71,9 @@ func main() {
 	logger.Info("Successfully created business gRPC client", zap.String("target", config.BusinessDSN))
 
 	// repos
-	businesRepo := repository.NewBusinessRepository(db)
-	userRepo := repository.NewUserRepository(db)
-	workingHoursRepo := repository.NewBusinessWorkingHoursRepository(db)
+	// businesRepo := repository.NewBusinessRepository(db)
+	// userRepo := repository.NewUserRepository(db)
+	// workingHoursRepo := repository.NewBusinessWorkingHoursRepository(db)
 	serviceRepo := repository.NewServiceRepository(db)
 	staffRepo := repository.NewStaffRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
@@ -83,7 +83,7 @@ func main() {
 	locationRepo := repository.NewLocationRepository(db)
 
 	// usecases
-	ucBusines := usecase.NewBusinessUseCase(businesRepo, locationRepo, userRepo, workingHoursRepo)
+
 	//authService := usecase.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
 
 	ucService := usecase.NewServiceUseCase(serviceRepo)
@@ -95,7 +95,7 @@ func main() {
 
 	//handlers
 
-	bh := handlers.NewBusinessHandler(ucBusines, businessCli)
+	bh := handlers.NewBusinessHandler(businessCli)
 	authHandler := handlers.NewAuthHandler(authCli)
 
 	serviceHandler := handlers.NewServiceHandler(ucService)
@@ -143,7 +143,7 @@ func main() {
 			
 				br.Route("/{businessID}", func(bir chi.Router) {
 					bir.Group(func(owner chi.Router) {
-						owner.Use(middleware.RequireRole("owner"))
+						//owner.Use(middleware.RequireRole("owner"))
 						owner.Get("/", bh.GetBusiness)
 						owner.Mount("/locations", locationHandler.Routes())
 						owner.Mount("/services", serviceHandler.Routes())
